@@ -80,7 +80,7 @@ function process(cameraTrajectory, rayTrajectories) {
     const trailGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(maxPoints * 3);
     trailGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const trailMaterial = new THREE.LineBasicMaterial({ color: colors[i] });
+    const trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
     const trail = new THREE.Line(trailGeometry, trailMaterial)
     currPoints.push(0);
     trails.push(trail);
@@ -133,11 +133,28 @@ function process(cameraTrajectory, rayTrajectories) {
   skyDome.position.set(0,0,0);
   skyDome.rotateX(Math.PI/2.0)
 
+  const axisPoints = [];
+  axisPoints.push(new THREE.Vector3(0, 0, 20));
+  axisPoints.push(new THREE.Vector3(0, 0, -20));
+  const spinAxis = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(axisPoints), 
+    new THREE.LineBasicMaterial({ color: 0xe1e1e1, linewidth: 5 })
+  );
+  scene.add(spinAxis)
+
   let i = 0;
   camera.up.set(0, 0, 1);
 
+  const capturer = new CCapture({
+    format: 'webm',
+    framerate: 60
+  });
+
+  let animationId;
+  capturer.start();
+
   function animate() {
-	  requestAnimationFrame( animate );
+	  animationId = requestAnimationFrame( animate );
 
     camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); // Positioned 10 units above the x-y plane
     camera.lookAt(new THREE.Vector3(0, 0, 0));
@@ -148,8 +165,13 @@ function process(cameraTrajectory, rayTrajectories) {
     }
 	  i += 1
 	  renderer.render( scene, camera );
+    capturer.capture( renderer.domElement )
   }
-
   animate();
+  setTimeout(() => {
+    cancelAnimationFrame(animationId);
+    capturer.stop();
+    capturer.save();
+  }, 15*1000);
 }
 
