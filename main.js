@@ -150,12 +150,12 @@ function process(cameraTrajectory, rayTrajectories) {
   );
   scene.add(radialAxis)
 
-  const capturer = new CCapture({
+/*   const capturer = new CCapture({
     format: 'webm',
     framerate: 60
   });
 
-  capturer.start();
+  capturer.start(); */
 
   let i = 0;
   let animationId;
@@ -172,14 +172,14 @@ function process(cameraTrajectory, rayTrajectories) {
     }
 	  i += 1
 	  renderer.render( scene, camera );
-    capturer.capture( renderer.domElement )
+    //capturer.capture( renderer.domElement )
   }
   animate();
-  setTimeout(() => {
+/*   setTimeout(() => {
     cancelAnimationFrame(animationId);
     capturer.stop();
     capturer.save();
-  }, 15*1000);
+  }, 15*1000); */
 }
 
 
