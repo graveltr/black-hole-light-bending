@@ -23,11 +23,21 @@ function parseCSV(csvText) {
 }
 
 // Array of CSV file URLs
+/* const csvUrls = [
+  'trajectories/subsupercritical/cameraTrajectory.csv',
+  'trajectories/subsupercritical/ray1.csv',
+  'trajectories/subsupercritical/ray2.csv',
+  'trajectories/subsupercritical/ray3.csv'
+]; */
+
 const csvUrls = [
-  'cameraTrajectory.csv',
-  'ray1.csv',
-  'ray2.csv',
-  'ray3.csv'
+  'trajectories/pairwise/cameraTrajectory.csv',
+  'trajectories/pairwise/ray1.csv',
+  'trajectories/pairwise/ray2.csv',
+  'trajectories/pairwise/ray3.csv',
+  'trajectories/pairwise/ray4.csv',
+  'trajectories/pairwise/ray5.csv',
+  'trajectories/pairwise/ray6.csv',
 ];
 
 // Map over the URLs and return an array of promises
@@ -48,8 +58,10 @@ Promise.all(fetchPromises)
   });
 
 function process(cameraTrajectory, rayTrajectories) {
+
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+  const cameraCenter = new THREE.Vector3(13, 0, 0);
 
   const renderer = new THREE.WebGLRenderer();
   const textureLoader = new THREE.TextureLoader();
@@ -57,16 +69,17 @@ function process(cameraTrajectory, rayTrajectories) {
   document.body.appendChild( renderer.domElement );
 
   const blackholeMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(13, 32, 32), 
+    new THREE.SphereGeometry(13, 64, 64), 
     new THREE.MeshBasicMaterial({ color: 0x000000 })
   );
   scene.add(blackholeMesh);
 
-  const colors = [0xff0000, 0x00ff00, 0x0000ff];
+  // const colors = [0xff0000, 0x00ff00, 0x0000ff];
+  const colors = [0xff0000, 0xff0000, 0x00ff00, 0x00ff00, 0x0000ff, 0x0000ff];
   const rayMeshes = [];
   for (let i = 0; i < rayTrajectories.length; i++){
     const rayMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2, 32, 32),
+      new THREE.SphereGeometry(0.05, 32, 32),
       new THREE.MeshBasicMaterial({ color: colors[i] })
     );
     rayMeshes.push(rayMesh);
@@ -107,20 +120,6 @@ function process(cameraTrajectory, rayTrajectories) {
     }
   }
 
-/*   const particlesGeometry = new THREE.BufferGeometry();
-  const starsVertices = [];
-  for (let i = 0; i < 50000; i++) {
-    const r = getRandomFloatOutsideInterval(200, 500);
-    const theta = Math.random() * Math.PI;
-    const phi = Math.random() * 2 * Math.PI;
-    const cartesianCoords = sphericalToCartesian(r, theta, phi)
-    starsVertices.push(cartesianCoords.x, cartesianCoords.y, cartesianCoords.z);
-  }
-  particlesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
-  const particlesMaterial = new THREE.PointsMaterial({ color: 0xffffff });
-  const starField = new THREE.Points(particlesGeometry, particlesMaterial);
-  scene.add(starField); */
-
   const skyGeometry = new THREE.SphereGeometry(2000, 60, 40);
   const skyTexture = textureLoader.load('eso0932a.jpg'); // Replace with the path to your sky texture
   skyTexture.colorSpace = THREE.SRGBColorSpace;
@@ -134,30 +133,38 @@ function process(cameraTrajectory, rayTrajectories) {
   skyDome.rotateX(Math.PI/2.0)
 
   const axisPoints = [];
-  axisPoints.push(new THREE.Vector3(0, 0, 20));
-  axisPoints.push(new THREE.Vector3(0, 0, -20));
+  axisPoints.push(new THREE.Vector3(0, 0, 15));
+  axisPoints.push(new THREE.Vector3(0, 0, -15));
   const spinAxis = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints(axisPoints), 
-    new THREE.LineBasicMaterial({ color: 0xe1e1e1, linewidth: 5 })
+    new THREE.LineBasicMaterial({ color: 0xe1e1e1, linewidth: 3 })
   );
   scene.add(spinAxis)
 
-  let i = 0;
-  camera.up.set(0, 0, 1);
+  const radialAxisPoints = [];
+  radialAxisPoints.push(new THREE.Vector3(0, 0, 0));
+  radialAxisPoints.push(new THREE.Vector3(40, 0, 0));
+  const radialAxis = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(radialAxisPoints), 
+    new THREE.LineBasicMaterial({ color: 0xe1e1e1, linewidth: 2 })
+  );
+  scene.add(radialAxis)
 
   const capturer = new CCapture({
     format: 'webm',
     framerate: 60
   });
 
-  let animationId;
   capturer.start();
 
+  let i = 0;
+  let animationId;
+  camera.up.set(0, 0, 1);
   function animate() {
 	  animationId = requestAnimationFrame( animate );
 
     camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); // Positioned 10 units above the x-y plane
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    camera.lookAt(cameraCenter);
 
     for (let j = 0; j < rayMeshes.length; j++){
 	    rayMeshes[j].position.set(rayTrajectories[j][i][0], rayTrajectories[j][i][1], rayTrajectories[j][i][2])
@@ -175,3 +182,17 @@ function process(cameraTrajectory, rayTrajectories) {
   }, 15*1000);
 }
 
+
+/*   const particlesGeometry = new THREE.BufferGeometry();
+const starsVertices = [];
+for (let i = 0; i < 50000; i++) {
+  const r = getRandomFloatOutsideInterval(200, 500);
+  const theta = Math.random() * Math.PI;
+  const phi = Math.random() * 2 * Math.PI;
+  const cartesianCoords = sphericalToCartesian(r, theta, phi)
+  starsVertices.push(cartesianCoords.x, cartesianCoords.y, cartesianCoords.z);
+}
+particlesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+const particlesMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+const starField = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(starField); */
