@@ -10,14 +10,14 @@ const colors = [];
 if (MOVIENUMBER == 1) {
   colors.push(0xff0000);
   colors.push(0x00ff00);
-  colors.push(0x0000ff);
+  colors.push(0x48B8D0);
 } else if (MOVIENUMBER == 2) {
   colors.push(0xff0000);
   colors.push(0xff0000);
   colors.push(0x00ff00);
   colors.push(0x00ff00);
-  colors.push(0x0000ff);
-  colors.push(0x0000ff);
+  colors.push(0x48B8D0);
+  colors.push(0x48B8D0);
 } else {
   throw new Error('Unknown movie number!');
 }
