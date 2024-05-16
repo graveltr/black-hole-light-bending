@@ -4,7 +4,7 @@ import { parseCSV } from './utilities.js';
 const CAPTUREON = import.meta.env.VITE_CAPTUREON;
 const CAPTURESECONDS = import.meta.env.VITE_CAPTURESECONDS;
 const MOVIENUMBER = import.meta.env.VITE_MOVIENUMBER;
-const MAXPOINTS = 10000;
+const MAXPOINTS = import.meta.env.VITE_MAXPOINTS;
 
 const colors = [];
 if (MOVIENUMBER == 1) {
@@ -192,20 +192,22 @@ function updateTrail(object, trail, points, idx) {
   const trailGeometry = trail.geometry;
   const positionAttribute = trailGeometry.attributes.position;
 
-  positionAttribute.array[points[idx] * 3] = object.position.x;
-  positionAttribute.array[points[idx] * 3 + 1] = object.position.y;
-  positionAttribute.array[points[idx] * 3 + 2] = object.position.z;
-
-  points[idx] = (points[idx] + 1) % MAXPOINTS;
-  positionAttribute.needsUpdate = true;
-
-  // If the trail is shorter than the maxPoints, set the draw range to the current number of points
-  if (points[idx] < MAXPOINTS - 1) {
-    trailGeometry.setDrawRange(0, points[idx]);
-  } else {
-    // Once the trail has reached its maximum length, we can use the entire buffer
-    trailGeometry.setDrawRange(0, MAXPOINTS);
+  // Shift the positions back to make room for the new point
+  for (let i = positionAttribute.count - 1; i > 0; i--) {
+    const prevIndex = (i - 1) * 3;
+    const currentIndex = i * 3;
+    positionAttribute.array[currentIndex] = positionAttribute.array[prevIndex];
+    positionAttribute.array[currentIndex + 1] = positionAttribute.array[prevIndex + 1];
+    positionAttribute.array[currentIndex + 2] = positionAttribute.array[prevIndex + 2];
   }
+
+  // Add the object's current position as the new point at the front of the trail
+  positionAttribute.array[0] = object.position.x;
+  positionAttribute.array[1] = object.position.y;
+  positionAttribute.array[2] = object.position.z;
+
+  // Notify Three.js that the positions need updating
+  positionAttribute.needsUpdate = true;
 }
 
 
