@@ -71,7 +71,7 @@ function process(cameraTrajectory, rayTrajectories) {
   addSpinAxis(scene);
   addSkyDome(scene, textureLoader);
   const rayMeshes = addRays(scene, rayTrajectories.length);
-  const [trails, currPoints] = addTrails(scene, rayTrajectories.length);
+  const [trails, currPoints] = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
   if(MOVIENUMBER == 2) { addRadialAxis(scene); }
 
   const capturer = new CCapture({
@@ -127,12 +127,17 @@ function addRays(scene, numRays) {
   return rayMeshes
 }
 
-function addTrails(scene, numRays) {
+function addTrails(scene, numRays, initialPositions) {
   let trails = [];
   let currPoints = [];
   for (let i = 0; i < numRays; i++) {
     const trailGeometry = new THREE.BufferGeometry();
     const positions = new Float32Array(MAXPOINTS * 3);
+    for (let j = 0; j < positions.length; j += 3) {
+      positions[j] = initialPositions[i][0];
+      positions[j+1] = initialPositions[i][1];
+      positions[j+2] = initialPositions[i][2];
+    }
     trailGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
     const trail = new THREE.Line(trailGeometry, trailMaterial)
