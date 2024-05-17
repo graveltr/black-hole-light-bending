@@ -9,10 +9,12 @@ const MAXPOINTS = import.meta.env.VITE_MAXPOINTS;
 
 const colors = [];
 colors.push(0x3E8914);
+colors.push(0x17BEBB);
 
 const csvUrls = [];
 csvUrls.push('trajectories/embeddingDiagram/cameraTrajectory.csv');
 csvUrls.push('trajectories/embeddingDiagram/ray1.csv');
+csvUrls.push('trajectories/embeddingDiagram/ray2.csv');
 
 // Map over the URLs and return an array of promises
 const fetchPromises = csvUrls.map(url =>
@@ -80,7 +82,7 @@ function addRays(scene, numRays) {
   const rayMeshes = [];
   for (let i = 0; i < numRays; i++){
     const rayMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.05, 32, 32),
+      new THREE.SphereGeometry(0.01, 32, 32),
       new THREE.MeshBasicMaterial({ color: colors[i] })
     );
     rayMeshes.push(rayMesh);
