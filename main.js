@@ -18,6 +18,9 @@ if (MOVIENUMBER == 1) {
   colors.push(0x00ff00);
   colors.push(0x48B8D0);
   colors.push(0x48B8D0);
+} else if (MOVIENUMBER == 3) {
+  colors.push(0x32CD32);
+  colors.push(0x17BEBB);
 } else {
   throw new Error('Unknown movie number!');
 }
@@ -36,6 +39,10 @@ if (MOVIENUMBER == 1) {
   csvUrls.push('trajectories/pairwise/ray4.csv');
   csvUrls.push('trajectories/pairwise/ray5.csv');
   csvUrls.push('trajectories/pairwise/ray6.csv');
+} else if (MOVIENUMBER == 3) {
+  csvUrls.push('trajectories/equatorial-rays/cameraTrajectory.csv');
+  csvUrls.push('trajectories/equatorial-rays/ray1.csv');
+  csvUrls.push('trajectories/equatorial-rays/ray2.csv');
 } else {
   throw new Error('Unknown movie number!');
 }
@@ -60,7 +67,7 @@ function process(cameraTrajectory, rayTrajectories) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-  const cameraCenter = new THREE.Vector3(13, 0, 0);
+  const cameraCenter = new THREE.Vector3(0, 0, 0);
   const renderer = new THREE.WebGLRenderer();
   const textureLoader = new THREE.TextureLoader();
   renderer.setSize( window.innerWidth, window.innerHeight );
@@ -165,7 +172,7 @@ function addSkyDome(scene, textureLoader) {
 
 function addBlackHole(scene) {
   const blackholeMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(13, 64, 64), 
+    new THREE.SphereGeometry(10.4, 64, 64), 
     new THREE.MeshBasicMaterial({ color: 0x000000 })
   );
   scene.add(blackholeMesh);

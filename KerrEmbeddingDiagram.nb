@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       157,          7]
-NotebookDataLength[   2238109,      37581]
-NotebookOptionsPosition[   2232195,      37477]
-NotebookOutlinePosition[   2232747,      37497]
-CellTagsIndexPosition[   2232704,      37494]
+NotebookDataLength[   2251984,      37921]
+NotebookOptionsPosition[   2243867,      37791]
+NotebookOutlinePosition[   2244421,      37811]
+CellTagsIndexPosition[   2244378,      37808]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -4620,6 +4620,8 @@ R8BWqXix2yAZUhkLjvfmCeB29My8GCKDczs/23ORAN34imZLERmkk8/MLC0R
  CellLabel->"Out[27]=",ExpressionUUID->"614d78b3-eb95-4c47-b6d2-77c139747190"]
 }, Open  ]],
 
+Cell[CellGroupData[{
+
 Cell[BoxData[{
  RowBox[{
   RowBox[{"SetDirectory", "@", 
@@ -4670,16 +4672,328 @@ Cell[BoxData[{
         RowBox[{"\"\<Cylindrical\>\"", "->", "\"\<Cartesian\>\""}], ",", 
         "#"}], "]"}], "&"}], ",", "%"}], "]"}]}], 
   ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Export", "[", 
+   RowBox[{
+   "\"\<./trajectories/embeddingDiagram/ray1.csv\>\"", ",", 
+    "embeddedCartesianTrajectory"}], "]"}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Import", "[", 
+   RowBox[{
+   "\"\<./trajectories/equatorial-rays/ray2.csv\>\"", ",", "\"\<CSV\>\""}], 
+   "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"trajectory", "=", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"1", "/", "10"}], ")"}], "%"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"sphericalTrajectory", "=", 
+   RowBox[{"ParallelMap", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"CoordinateTransform", "[", 
+       RowBox[{
+        RowBox[{"\"\<Cartesian\>\"", "->", "\"\<Spherical\>\""}], ",", "#"}], 
+       "]"}], "&"}], ",", "trajectory"}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"cylindricalTrajectory", "=", 
+   RowBox[{"ParallelMap", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"Rn", "[", 
+         RowBox[{"#", "[", 
+          RowBox[{"[", "1", "]"}], "]"}], "]"}], ",", 
+        RowBox[{"#", "[", 
+         RowBox[{"[", "3", "]"}], "]"}], ",", 
+        RowBox[{"Zn", "[", 
+         RowBox[{"#", "[", 
+          RowBox[{"[", "1", "]"}], "]"}], "]"}]}], "}"}], "&"}], ",", "%"}], 
+    "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"embeddedCartesianTrajectory", "=", 
+   RowBox[{"ParallelMap", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"CoordinateTransform", "[", 
+       RowBox[{
+        RowBox[{"\"\<Cylindrical\>\"", "->", "\"\<Cartesian\>\""}], ",", 
+        "#"}], "]"}], "&"}], ",", "%"}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
  RowBox[{"Export", "[", 
   RowBox[{
-  "\"\<./trajectories/embeddingDiagram/ray1.csv\>\"", ",", 
+  "\"\<./trajectories/embeddingDiagram/ray2.csv\>\"", ",", 
    "embeddedCartesianTrajectory"}], "]"}]}], "Input",
  CellChangeTimes->{{3.924893866773058*^9, 3.924893887059992*^9}, {
   3.9248940809626703`*^9, 3.9248940810791883`*^9}, {3.924907974879744*^9, 
   3.9249079786089067`*^9}, {3.924908061543311*^9, 3.9249080692777452`*^9}, {
-  3.924908199120685*^9, 
-  3.9249081993775587`*^9}},ExpressionUUID->"083f675f-7975-41d0-b669-\
-008762a21074"],
+  3.924908199120685*^9, 3.9249081993775587`*^9}, {3.924911747007743*^9, 
+  3.924911761577948*^9}},
+ CellLabel->
+  "In[299]:=",ExpressionUUID->"083f675f-7975-41d0-b669-008762a21074"],
+
+Cell[BoxData["\<\"./trajectories/embeddingDiagram/ray1.csv\"\>"], "Output",
+ CellChangeTimes->{3.924911774777947*^9},
+ CellLabel->
+  "Out[305]=",ExpressionUUID->"1269cc3c-84a0-4a61-8744-06600ee277cd"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"20.402028141615638`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911779384803*^9},
+ CellLabel->
+  "(kernel 3)",ExpressionUUID->"dacb20bf-3d85-4406-be6a-50e8fa7c0bf2"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"21.891197533989104`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117794152527`*^9},
+ CellLabel->
+  "(kernel 5)",ExpressionUUID->"e2f22d04-baea-4bf8-af5e-b3e7d313ca3b"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"23.391361559721418`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911779469552*^9},
+ CellLabel->
+  "(kernel 6)",ExpressionUUID->"f076f2ca-5c29-4118-bc67-7475e5dcd08f"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"24.900781329546568`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911779497113*^9},
+ CellLabel->
+  "(kernel 4)",ExpressionUUID->"30f366df-cd8e-484e-bd7a-8d539bcef380"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \
+\\\"20.02038576207154`\\\", \\\"}\\\"}]\\) lies outside the range of data in \
+the interpolating function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117795242863`*^9},
+ CellLabel->
+  "(kernel 2)",ExpressionUUID->"08422b6a-5572-437d-8961-b7e37bc6ef2f"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"20.402028141615638`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117795537*^9},
+ CellLabel->
+  "(kernel 3)",ExpressionUUID->"60f7253f-e7f3-4486-922c-244476126ed4"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"21.891197533989104`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117795835342`*^9},
+ CellLabel->
+  "(kernel 5)",ExpressionUUID->"d012ddb7-1003-44e9-8cf5-bbb1d9ce7da2"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"23.391361559721418`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117796143417`*^9},
+ CellLabel->
+  "(kernel 6)",ExpressionUUID->"5bc8dbab-0a37-46d2-8f8c-c7aa4597e24b"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"24.900781329546568`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911779648444*^9},
+ CellLabel->
+  "(kernel 4)",ExpressionUUID->"1c8e91d3-9597-4245-b1a6-99f677ca7724"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \
+\\\"20.02038576207154`\\\", \\\"}\\\"}]\\) lies outside the range of data in \
+the interpolating function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117796802073`*^9},
+ CellLabel->
+  "(kernel 2)",ExpressionUUID->"69590f5e-1a3e-4451-8a26-61922200d5f8"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"20.424503479864814`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117797114363`*^9},
+ CellLabel->
+  "(kernel 3)",ExpressionUUID->"c9b7740f-2a61-4d6f-9791-379306b783a4"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \
+\\\"21.91384702087064`\\\", \\\"}\\\"}]\\) lies outside the range of data in \
+the interpolating function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911779743599*^9},
+ CellLabel->
+  "(kernel 5)",ExpressionUUID->"b082b43b-84a5-4ab8-a8c1-4052376a2c76"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \
+\\\"23.41416466518411`\\\", \\\"}\\\"}]\\) lies outside the range of data in \
+the interpolating function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117797766647`*^9},
+ CellLabel->
+  "(kernel 6)",ExpressionUUID->"38c470b4-b514-43f9-abec-a9416729a20c"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \\\"24.923721195267767`\
+\\\", \\\"}\\\"}]\\) lies outside the range of data in the interpolating \
+function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.92491177980917*^9},
+ CellLabel->
+  "(kernel 4)",ExpressionUUID->"84735d20-7907-48af-bee8-6886cf42ae7c"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"InterpolatingFunction", "::", "dmval"}], "MessageName"], " ", ":",
+   "  ", "\<\"Input value \\!\\(\\*RowBox[{\\\"{\\\", \
+\\\"20.04281153946914`\\\", \\\"}\\\"}]\\) lies outside the range of data in \
+the interpolating function. Extrapolation will be used.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.9249117798414507`*^9},
+ CellLabel->
+  "(kernel 2)",ExpressionUUID->"53ea6380-7b69-49cb-8931-89ab341ee8ee"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"General", "::", "stop"}], "MessageName"], " ", ":", 
+  "  ", "\<\"Further output of \
+\\!\\(\\*StyleBox[RowBox[{\\\"InterpolatingFunction\\\", \\\"::\\\", \
+\\\"dmval\\\"}], \\\"MessageName\\\"]\\) will be suppressed during this \
+calculation.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911779873597*^9},
+ CellLabel->
+  "(kernel 3)",ExpressionUUID->"3133fd10-9ead-4901-a23a-b2d51c8e6f4d"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"General", "::", "stop"}], "MessageName"], " ", ":", 
+  "  ", "\<\"Further output of \
+\\!\\(\\*StyleBox[RowBox[{\\\"InterpolatingFunction\\\", \\\"::\\\", \
+\\\"dmval\\\"}], \\\"MessageName\\\"]\\) will be suppressed during this \
+calculation.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911779905868*^9},
+ CellLabel->
+  "(kernel 5)",ExpressionUUID->"b5b49ad4-8677-43d8-a4e2-aecd95079ed8"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"General", "::", "stop"}], "MessageName"], " ", ":", 
+  "  ", "\<\"Further output of \
+\\!\\(\\*StyleBox[RowBox[{\\\"InterpolatingFunction\\\", \\\"::\\\", \
+\\\"dmval\\\"}], \\\"MessageName\\\"]\\) will be suppressed during this \
+calculation.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911779939225*^9},
+ CellLabel->
+  "(kernel 6)",ExpressionUUID->"f275bffb-6592-45ee-ac03-be332da8dd54"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"General", "::", "stop"}], "MessageName"], " ", ":", 
+  "  ", "\<\"Further output of \
+\\!\\(\\*StyleBox[RowBox[{\\\"InterpolatingFunction\\\", \\\"::\\\", \
+\\\"dmval\\\"}], \\\"MessageName\\\"]\\) will be suppressed during this \
+calculation.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.92491177997106*^9},
+ CellLabel->
+  "(kernel 4)",ExpressionUUID->"58e8ad25-60a5-4d49-b752-42090513f24c"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{"General", "::", "stop"}], "MessageName"], " ", ":", 
+  "  ", "\<\"Further output of \
+\\!\\(\\*StyleBox[RowBox[{\\\"InterpolatingFunction\\\", \\\"::\\\", \
+\\\"dmval\\\"}], \\\"MessageName\\\"]\\) will be suppressed during this \
+calculation.\"\>"}]], "Print",
+ ShowCellLabel->True,
+ CellChangeTimes->{3.924911780003392*^9},
+ CellLabel->
+  "(kernel 2)",ExpressionUUID->"424696c3-a383-4a70-afe0-16bbe9ee4c0e"]
+}, Open  ]],
+
+Cell[BoxData["\<\"./trajectories/embeddingDiagram/ray2.csv\"\>"], "Output",
+ CellChangeTimes->{3.9249117844368267`*^9},
+ CellLabel->
+  "Out[311]=",ExpressionUUID->"06ca2a8d-04d0-4145-9585-5192cefa3963"]
+}, Open  ]],
 
 Cell[CellGroupData[{
 
@@ -37475,7 +37789,7 @@ Cell[BoxData[
   "In[289]:=",ExpressionUUID->"6e38faa3-a13d-43e9-83e6-e270af749015"]
 }, Open  ]]
 },
-WindowSize->{1423.5, 1557},
+WindowSize->{1423.5, 1570.5},
 WindowMargins->{{11.25, Automatic}, {11.25, Automatic}},
 PrivateNotebookOptions->{"VersionedStylesheet"->{"Default.nb"[8.] -> False}},
 ShowSelection->True,
@@ -37556,32 +37870,58 @@ Cell[CellGroupData[{
 Cell[224493, 4274, 673, 17, 136, "Input",ExpressionUUID->"e80b1b15-af19-4a10-89ad-d339a6b1f329"],
 Cell[225169, 4293, 16104, 326, 348, "Output",ExpressionUUID->"614d78b3-eb95-4c47-b6d2-77c139747190"]
 }, Open  ]],
-Cell[241288, 4622, 2099, 59, 228, "Input",ExpressionUUID->"083f675f-7975-41d0-b669-008762a21074"],
 Cell[CellGroupData[{
-Cell[243412, 4685, 2795, 70, 373, "Input",ExpressionUUID->"80c4a524-38c8-48bb-9bb8-8f0080b2376e"],
-Cell[246210, 4757, 285, 5, 50, "Output",ExpressionUUID->"92e5b428-4953-4791-aa4f-816c6e9fb979"]
+Cell[241310, 4624, 3863, 112, 443, "Input",ExpressionUUID->"083f675f-7975-41d0-b669-008762a21074"],
+Cell[245176, 4738, 200, 3, 50, "Output",ExpressionUUID->"1269cc3c-84a0-4a61-8744-06600ee277cd"],
+Cell[CellGroupData[{
+Cell[245401, 4745, 472, 10, 63, "Print",ExpressionUUID->"dacb20bf-3d85-4406-be6a-50e8fa7c0bf2"],
+Cell[245876, 4757, 474, 10, 63, "Print",ExpressionUUID->"e2f22d04-baea-4bf8-af5e-b3e7d313ca3b"],
+Cell[246353, 4769, 472, 10, 63, "Print",ExpressionUUID->"f076f2ca-5c29-4118-bc67-7475e5dcd08f"],
+Cell[246828, 4781, 472, 10, 63, "Print",ExpressionUUID->"30f366df-cd8e-484e-bd7a-8d539bcef380"],
+Cell[247303, 4793, 473, 10, 63, "Print",ExpressionUUID->"08422b6a-5572-437d-8961-b7e37bc6ef2f"],
+Cell[247779, 4805, 470, 10, 63, "Print",ExpressionUUID->"60f7253f-e7f3-4486-922c-244476126ed4"],
+Cell[248252, 4817, 474, 10, 63, "Print",ExpressionUUID->"d012ddb7-1003-44e9-8cf5-bbb1d9ce7da2"],
+Cell[248729, 4829, 474, 10, 63, "Print",ExpressionUUID->"5bc8dbab-0a37-46d2-8f8c-c7aa4597e24b"],
+Cell[249206, 4841, 472, 10, 63, "Print",ExpressionUUID->"1c8e91d3-9597-4245-b1a6-99f677ca7724"],
+Cell[249681, 4853, 473, 10, 63, "Print",ExpressionUUID->"69590f5e-1a3e-4451-8a26-61922200d5f8"],
+Cell[250157, 4865, 474, 10, 63, "Print",ExpressionUUID->"c9b7740f-2a61-4d6f-9791-379306b783a4"],
+Cell[250634, 4877, 471, 10, 63, "Print",ExpressionUUID->"b082b43b-84a5-4ab8-a8c1-4052376a2c76"],
+Cell[251108, 4889, 473, 10, 63, "Print",ExpressionUUID->"38c470b4-b514-43f9-abec-a9416729a20c"],
+Cell[251584, 4901, 471, 10, 63, "Print",ExpressionUUID->"84735d20-7907-48af-bee8-6886cf42ae7c"],
+Cell[252058, 4913, 473, 10, 63, "Print",ExpressionUUID->"53ea6380-7b69-49cb-8931-89ab341ee8ee"],
+Cell[252534, 4925, 457, 11, 34, "Print",ExpressionUUID->"3133fd10-9ead-4901-a23a-b2d51c8e6f4d"],
+Cell[252994, 4938, 457, 11, 34, "Print",ExpressionUUID->"b5b49ad4-8677-43d8-a4e2-aecd95079ed8"],
+Cell[253454, 4951, 457, 11, 34, "Print",ExpressionUUID->"f275bffb-6592-45ee-ac03-be332da8dd54"],
+Cell[253914, 4964, 456, 11, 34, "Print",ExpressionUUID->"58e8ad25-60a5-4d49-b752-42090513f24c"],
+Cell[254373, 4977, 457, 11, 34, "Print",ExpressionUUID->"424696c3-a383-4a70-afe0-16bbe9ee4c0e"]
+}, Open  ]],
+Cell[254845, 4991, 202, 3, 50, "Output",ExpressionUUID->"06ca2a8d-04d0-4145-9585-5192cefa3963"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[246532, 4767, 2457, 64, 350, "Input",ExpressionUUID->"d5e34fef-8ba1-49a5-9ceb-4cc6b46f60cc"],
-Cell[248992, 4833, 2142, 46, 572, "Output",ExpressionUUID->"3bbedfbd-0700-4d65-b019-fd60158a145f"]
+Cell[255084, 4999, 2795, 70, 373, "Input",ExpressionUUID->"80c4a524-38c8-48bb-9bb8-8f0080b2376e"],
+Cell[257882, 5071, 285, 5, 50, "Output",ExpressionUUID->"92e5b428-4953-4791-aa4f-816c6e9fb979"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[251171, 4884, 175, 3, 44, "Input",ExpressionUUID->"a07ad32f-d740-4191-a090-b28ccb0b4d1a"],
-Cell[251349, 4889, 202, 3, 50, "Output",ExpressionUUID->"93a28a85-0473-4992-b5ba-e069a17f2e5e"]
+Cell[258204, 5081, 2457, 64, 350, "Input",ExpressionUUID->"d5e34fef-8ba1-49a5-9ceb-4cc6b46f60cc"],
+Cell[260664, 5147, 2142, 46, 572, "Output",ExpressionUUID->"3bbedfbd-0700-4d65-b019-fd60158a145f"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[251588, 4897, 1811, 46, 263, "Input",ExpressionUUID->"6fc1346c-264a-4b3a-9217-d1b805f58001"],
-Cell[253402, 4945, 160, 3, 50, "Output",ExpressionUUID->"ec23939a-dc3a-4f50-8f32-845a728dd3d2"]
+Cell[262843, 5198, 175, 3, 44, "Input",ExpressionUUID->"a07ad32f-d740-4191-a090-b28ccb0b4d1a"],
+Cell[263021, 5203, 202, 3, 50, "Output",ExpressionUUID->"93a28a85-0473-4992-b5ba-e069a17f2e5e"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[253599, 4953, 210, 3, 44, "Input",ExpressionUUID->"dfa50243-d35c-4daf-be48-4c47d91f742c"],
-Cell[253812, 4958, 703007, 11543, 252, 648577, 10650, "CachedBoxData", "BoxData", "Output",ExpressionUUID->"69bdb338-3b1b-4fc2-93d9-5c537980bfc3"]
+Cell[263260, 5211, 1811, 46, 263, "Input",ExpressionUUID->"6fc1346c-264a-4b3a-9217-d1b805f58001"],
+Cell[265074, 5259, 160, 3, 50, "Output",ExpressionUUID->"ec23939a-dc3a-4f50-8f32-845a728dd3d2"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[956856, 16506, 1339, 36, 169, "Input",ExpressionUUID->"73806ed2-380b-4e46-86b4-6d00260c08ac"],
-Cell[958198, 16544, 1273746, 20921, 515, 1074616, 17656, "CachedBoxData", "BoxData", "Output",ExpressionUUID->"b9beaad6-e97b-47d6-bbbe-302088c59269"]
+Cell[265271, 5267, 210, 3, 44, "Input",ExpressionUUID->"dfa50243-d35c-4daf-be48-4c47d91f742c"],
+Cell[265484, 5272, 703007, 11543, 252, 648577, 10650, "CachedBoxData", "BoxData", "Output",ExpressionUUID->"69bdb338-3b1b-4fc2-93d9-5c537980bfc3"]
 }, Open  ]],
-Cell[2231959, 37468, 220, 6, 44, "Input",ExpressionUUID->"6e38faa3-a13d-43e9-83e6-e270af749015"]
+Cell[CellGroupData[{
+Cell[968528, 16820, 1339, 36, 169, "Input",ExpressionUUID->"73806ed2-380b-4e46-86b4-6d00260c08ac"],
+Cell[969870, 16858, 1273746, 20921, 515, 1074616, 17656, "CachedBoxData", "BoxData", "Output",ExpressionUUID->"b9beaad6-e97b-47d6-bbbe-302088c59269"]
+}, Open  ]],
+Cell[2243631, 37782, 220, 6, 44, "Input",ExpressionUUID->"6e38faa3-a13d-43e9-83e6-e270af749015"]
 }, Open  ]]
 }
 ]

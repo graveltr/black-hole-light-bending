@@ -8,7 +8,8 @@ const MOVIENUMBER = import.meta.env.VITE_MOVIENUMBER;
 const MAXPOINTS = import.meta.env.VITE_MAXPOINTS;
 
 const colors = [];
-colors.push(0x3E8914);
+
+colors.push(0x32CD32);
 colors.push(0x17BEBB);
 
 const csvUrls = [];
@@ -49,26 +50,45 @@ function process(cameraTrajectory, rayTrajectories) {
 	document.body.appendChild( renderer.domElement );
 
 	addThroat(scene);
-  	const rayMeshes = addRays(scene, rayTrajectories.length);
-  	const [trails, currPoints] = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
+  const rayMeshes = addRays(scene, rayTrajectories.length);
+  const [trails, currPoints] = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
+
+
+  const capturer = new CCapture({
+    format: 'webm',
+    framerate: 60
+  });
+  if(CAPTUREON == 1) { capturer.start(); }
 
 	let i = 0;
+  let animationId;
 	function animate() {
-		requestAnimationFrame( animate );
+		animationId = requestAnimationFrame( animate );
 
-    	camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); // Positioned 10 units above the x-y plane
-    	camera.lookAt(cameraCenter);
+    camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); // Positioned 10 units above the x-y plane
+    camera.lookAt(cameraCenter);
 
 		for (let j = 0; j < rayMeshes.length; j++){
 			rayMeshes[j].position.set(rayTrajectories[j][i][0], rayTrajectories[j][i][1], rayTrajectories[j][i][2])
 		updateTrail(rayMeshes[j], trails[j], currPoints, j)
 		}
 		i += 2
-
 		renderer.render( scene, camera );
+
+    if(CAPTUREON == 1) { 
+      console.log('capturing!')
+      capturer.capture( renderer.domElement ); 
+    }
 	}
 
 	animate();
+  if(CAPTUREON == 1) {
+    setTimeout(() => {
+      cancelAnimationFrame(animationId);
+      capturer.stop();
+      capturer.save();
+    }, CAPTURESECONDS * 1000);
+  }
 }
 
 function addThroat(scene) {
