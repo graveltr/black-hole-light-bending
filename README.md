@@ -1,6 +1,9 @@
 [![2406.11671](https://img.shields.io/badge/arXiv-2406.11671-b31b1b.svg)](https://arxiv.org/abs/2406.11671) 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+The code used to implement the various animations and diagrams that appear in
+[2406.11671](https://arxiv.org/abs/2406.11671).
+
 # Installation
 
 Once you have cloned this repository, you will need to install the dependencies
@@ -48,31 +51,39 @@ are several command line options that augment the behavior of the animation.
 The movie numbers are described in the section that follows.
 
 To select the embedding diagram animation, uncomment and comment the following lines 
-in [the main html page](index.html)
+in [index.html](index.html).
 
 ```
 <!-- <script type="module" src="/main.js"></script> -->
 <script type="module" src="/embeddingDiagram.js"></script> 
 ```
 
-This changes the main javascript file to <embeddingDiagram.js> rather than
-<main.js>. The value of `VITE_MOVIENUMBER` is irrelevant when this file is 
+This changes the main javascript file to [embeddingDiagram.js](embeddingDiagram.js) rather than
+[main.js](main.js). The value of `VITE_MOVIENUMBER` is irrelevant when this file is 
 used.
 
 
 # Computation Workflow
 
-The javascript files <main.js> and <embeddingDiagram.js> are responsible for 
-rendering predefined trajectories, which are stored in `trajectories/`.
+The javascript files [main.js](main.js) and
+[embeddingDiagram.js](embeddingDiagram.js) are responsible for rendering
+predefined trajectories, which are stored in `trajectories/`. The
+trajectories rendered by [main.js](main.js) are computed in [RayTracing.nb](RayTracing.nb) while 
+the trajectories rendered by [embeddingDiagram.js](embeddingDiagram.js) are first computed in 
+[EquatorialRays.nb](EquatorialRays.nb) and then transformed into the embedding space in 
+[KerrEmbeddingDiagram.nb](KerrEmbeddingDiagram.nb). The latter notebook also computes the 
+embedding diagram itself and exports the geometry to `models/`.
 
 # Animation Descriptions
 
-krt-subsupercritical.mp4:
+Below are brief descriptions of the various animations.
+
+Movie 1: Kerr Ray Tracing Subsupercritical:
 Showcases 3 rays, emitted from the same location but with initial momenta tuned
 such that one ray falls into the black hole, one ray is bound, and the other is
 ejected to infinity.
 
-krt-Lyapunov-long-trails.mp4:
+Movie 2: Kerr Ray Tracing Lyapunov:
 Showcases 3 pairs of rays. In each pair, one of the rays is emitted with
 momentum such that it is bound, while the other is shot with the same momentum
 but perturbed slightly in radius by an amount delta r. The separation between
@@ -82,14 +93,12 @@ exponent. I have also included a plot of the value of the Lyapunov exponent as
 one moves radially through the photon sphere, along with the selected radii and
 corresponding Lyapunov values color coded to match the movie.
 
-krt-Lyapunov-short-trails.mp4:
-Same as the previous description, except I've shortened the length of the ray
-trails to make the movie a bit less busy.
+Movie 3: Kerr Ray Tracing Equatorial Rays:
+Shows equatorially orbiting rays about a high-spin black hole that eventually
+eject to infinity. The rays start in the same position, but one of the rays has
+a larger initial momentum, leading to more rapid escape. 
 
-krt-equatorial-rays-with-embedding-diagram.mp4:
-A side-by-side movie. The left-hand side shows equatorially orbiting rays about
-a high-spin black hole that eventually eject to infinity. The rays start in the
-same position, but one of the rays has a larger initial momentum, leading to
-more rapid escape. On the right-hand side is the embedding diagram of the
-equatorial plane along with the mapped ray trajectories. We see the photons
-orbit and then climb out of the throat.
+embeddingDiagram.js: Kerr Ray Tracing Embedded Equatorial Rays:
+The same physical setup as Movie 3, but displayed in the embedding space.
+We see the embedding diagram of the equatorial plane along with the mapped ray
+trajectories. We see the photons orbit and then climb out of the throat.
