@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { parseCSV } from './utilities.js';
 
+console.log("hello world")
+
 const CAPTUREON = import.meta.env.VITE_CAPTUREON;
 const CAPTURESECONDS = import.meta.env.VITE_CAPTURESECONDS;
 const MOVIENUMBER = import.meta.env.VITE_MOVIENUMBER;
