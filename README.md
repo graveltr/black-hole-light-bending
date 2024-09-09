@@ -1,7 +1,6 @@
 [![2406.11671](https://img.shields.io/badge/arXiv-2406.11671-b31b1b.svg)](https://arxiv.org/abs/2406.11671) 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-
 krt-subsupercritical.mp4:
 Showcases 3 rays, emitted from the same location but with initial momenta tuned
 such that one ray falls into the black hole, one ray is bound, and the other is
