@@ -83,6 +83,8 @@ Showcases 3 rays, emitted from the same location but with initial momenta tuned
 such that one ray falls into the black hole, one ray is bound, and the other is
 ejected to infinity.
 
+![subsupercritical](gifs/krt-subsupercritical.gif)
+
 Movie 2: Kerr Ray Tracing Lyapunov:
 Showcases 3 pairs of rays. In each pair, one of the rays is emitted with
 momentum such that it is bound, while the other is shot with the same momentum
@@ -93,12 +95,18 @@ exponent. I have also included a plot of the value of the Lyapunov exponent as
 one moves radially through the photon sphere, along with the selected radii and
 corresponding Lyapunov values color coded to match the movie.
 
+![lyapunov](gifs/krt-lyapunov.gif)
+
 Movie 3: Kerr Ray Tracing Equatorial Rays:
 Shows equatorially orbiting rays about a high-spin black hole that eventually
 eject to infinity. The rays start in the same position, but one of the rays has
 a larger initial momentum, leading to more rapid escape. 
 
+![equatorial](gifs/krt-equatorial-rays.gif)
+
 embeddingDiagram.js: Kerr Ray Tracing Embedded Equatorial Rays:
 The same physical setup as Movie 3, but displayed in the embedding space.
 We see the embedding diagram of the equatorial plane along with the mapped ray
 trajectories. We see the photons orbit and then climb out of the throat.
+
+![embedding](gifs/krt-embeddingDiagram.gif)
