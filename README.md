@@ -48,7 +48,7 @@ are several command line options that augment the behavior of the animation.
 | VITE_MOVIENUMBER | 1,2,3  | Selects one of the three animations |
 | VITE_MAXPOINTS | Positive integer  | Sets the length of the ray trails |
 
-The movie numbers are described in the section that follows.
+The movie numbers are described in [Animation Descriptions](#animation-descriptions).
 
 To select the embedding diagram animation, uncomment and comment the following lines 
 in [index.html](index.html).
