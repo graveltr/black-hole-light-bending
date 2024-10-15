@@ -78,14 +78,14 @@ embedding diagram itself and exports the geometry to `models/`.
 
 Below are brief descriptions of the various animations.
 
-Movie 1: Kerr Ray Tracing Subsupercritical:
+Kerr Ray Tracing Subsupercritical:
 Showcases 3 rays, emitted from the same location but with initial momenta tuned
 such that one ray falls into the black hole, one ray is bound, and the other is
 ejected to infinity.
 
 ![subsupercritical](gifs/krt-subsupercritical.gif)
 
-Movie 2: Kerr Ray Tracing Lyapunov:
+Kerr Ray Tracing Lyapunov:
 Showcases 3 pairs of rays. In each pair, one of the rays is emitted with
 momentum such that it is bound, while the other is shot with the same momentum
 but perturbed slightly in radius by an amount delta r. The separation between
@@ -97,7 +97,7 @@ corresponding Lyapunov values color coded to match the movie.
 
 ![lyapunov](gifs/krt-lyapunov.gif)
 
-Movie 3: Kerr Ray Tracing Equatorial Rays:
+Kerr Ray Tracing Equatorial Rays:
 Shows equatorially orbiting rays about a high-spin black hole that eventually
 eject to infinity. The rays start in the same position, but one of the rays has
 a larger initial momentum, leading to more rapid escape. 
