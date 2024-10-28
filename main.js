@@ -85,7 +85,7 @@ function process(cameraTrajectory, rayTrajectories) {
   addSpinAxis(scene);
   addSkyDome(scene, textureLoader);
   const rayMeshes = addRays(scene, rayTrajectories.length);
-  const [trails, currPoints] = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
+  const trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
   if (MOVIENUMBER == 2) { addRadialAxis(scene); }
 
   const capturer = new CCapture({
@@ -183,7 +183,6 @@ function addRays(scene, numRays) {
 
 function addTrails(scene, numRays, initialPositions) {
   let trails = [];
-  let currPoints = [];
 
   // Iterate through the rays.
   for (let i = 0; i < numRays; i++) {
@@ -211,11 +210,9 @@ function addTrails(scene, numRays, initialPositions) {
 
     trails.push(trail);
     scene.add(trail);
-
-    currPoints.push(0);
   }
 
-  return [trails, currPoints];
+  return trails;
 }
 
 function addSkyDome(scene, textureLoader) {
