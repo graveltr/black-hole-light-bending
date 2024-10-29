@@ -45,6 +45,13 @@ if (MOVIENUMBER == 1) {
   csvUrls.push('trajectories/equatorial-rays/cameraTrajectory.csv');
   csvUrls.push('trajectories/equatorial-rays/ray1.csv');
   csvUrls.push('trajectories/equatorial-rays/ray2.csv');
+} else if (MOVIENUMBER == 4) {
+  colors.push(0x32CD32);
+  colors.push(0x17BEBB);
+
+  csvUrls.push('trajectories/tau/cameraTrajectory.csv');
+  csvUrls.push('trajectories/tau/ray1.csv');
+  csvUrls.push('trajectories/tau/ray1projection.csv');
 } else {
   throw new Error('Unknown movie number!');
 }
@@ -68,7 +75,7 @@ Promise.all(fetchPromises)
 /*
 * This is the main body of code. It is called once all of the fetch requests
 * above complete. It is passed a camera trajectory and an array of light ray 
-* trajectories, which themselves are arrays of vectores (x,y,z coordinates).
+* trajectories, which themselves are arrays of vectors (x,y,z coordinates).
 */
 function process(cameraTrajectory, rayTrajectories) {
   // Set up the THREE.js scene.
@@ -87,6 +94,7 @@ function process(cameraTrajectory, rayTrajectories) {
   const rayMeshes = addRays(scene, rayTrajectories.length);
   const trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
   if (MOVIENUMBER == 2) { addRadialAxis(scene); }
+  if (MOVIENUMBER == 4) { addEquatorialDisk(scene); }
 
   const capturer = new CCapture({
     format: 'webm',
@@ -94,29 +102,77 @@ function process(cameraTrajectory, rayTrajectories) {
   });
   if (CAPTUREON == 1) { capturer.start(); }
 
-  let i = 0;
+  let i = 0; // This index is used for movies 1 - 3
+
+  let currTrajectoryIdx = 0; // These indices are used for movie 4
+  let currTrajectoryCoordIdx = 0; // These indices are used for movie 4
+  let cameraIdx = 0; // These indices are used for movie 4
+
   let animationId;
   camera.up.set(0, 0, 1);
+
+  // UI references
+  const rotationInfoElement = document.getElementById('rotation-info');
 
   // Function that runs every frame.
   function animate() {
 	  animationId = requestAnimationFrame( animate );
 
-    camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); 
-    camera.lookAt(cameraCenter);
-
     /*
     * For each light ray, update the position of the photon. Also update the corresponding 
-    * ray trail.
+    * ray trail. The logic is slightly different for movie 4.
     */
-    for (let j = 0; j < rayMeshes.length; j++){
-      // Update the photon position.
-	    rayMeshes[j].position.set(rayTrajectories[j][i][0], rayTrajectories[j][i][1], rayTrajectories[j][i][2])
+    if (MOVIENUMBER == 4) {
+      camera.position.set(cameraTrajectory[cameraIdx][0],cameraTrajectory[cameraIdx][1],cameraTrajectory[cameraIdx][2]); 
+      camera.lookAt(cameraCenter);
 
-      // Now update the trail.
-      updateTrail(rayMeshes[j], trails[j])
+      let currProjectedTrajectoryIdx = currTrajectoryIdx + 1;
+
+      // Update the actual trajectory and its trail
+      rayMeshes[currTrajectoryIdx].position.set(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][0], 
+                                                rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][1], 
+                                                rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][2]);
+      updateTrail(rayMeshes[currTrajectoryIdx], trails[currTrajectoryIdx]);
+
+      // Update the projected trajectory and its trail
+      rayMeshes[currProjectedTrajectoryIdx].position.set( rayTrajectories[currProjectedTrajectoryIdx][currTrajectoryCoordIdx][0], 
+                                                          rayTrajectories[currProjectedTrajectoryIdx][currTrajectoryCoordIdx][1], 
+                                                          rayTrajectories[currProjectedTrajectoryIdx][currTrajectoryCoordIdx][2]);
+      updateTrail(rayMeshes[currProjectedTrajectoryIdx], trails[currProjectedTrajectoryIdx]);
+
+      /* 
+      * For movie 4, we animate the trajectories two at a time (the trajectory and its equatorial projection), 
+      * with pairs proceeding in sequence.
+      */
+      currTrajectoryCoordIdx += 1;
+      if (currTrajectoryCoordIdx == rayTrajectories[currTrajectoryIdx].length) {
+        currTrajectoryIdx = (currTrajectoryIdx + 1) % rayTrajectories.length; 
+        currTrajectoryCoordIdx = 0;
+      }
+
+      cameraIdx += 1;
+
+      // Update the UI
+      let currentSphericalCoordinates = cartesianToSpherical( rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][0],
+                                                              rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][1],
+                                                              rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][2]);
+
+      console.log(Number(currentSphericalCoordinates.phi.toFixed(2)))
+      rotationInfoElement.textContent = `phi: ${Number(currentSphericalCoordinates.phi.toFixed(2))}`;
+    } else {
+      camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); 
+      camera.lookAt(cameraCenter);
+
+      for (let j = 0; j < rayMeshes.length; j++){
+        // Update the photon position.
+        rayMeshes[j].position.set(rayTrajectories[j][i][0], rayTrajectories[j][i][1], rayTrajectories[j][i][2]);
+
+        // Now update the trail.
+        updateTrail(rayMeshes[j], trails[j]);
+      }
+	    i = i + 1;
     }
-	  i += 1
+
 	  renderer.render( scene, camera );
 
     if (CAPTUREON == 1) { 
@@ -164,6 +220,8 @@ function updateTrail(object, trail) {
 
   // Notify Three.js that the positions need updating.
   positionAttribute.needsUpdate = true;
+
+  trail.computeLineDistances();
 }
 
 function addRays(scene, numRays) {
@@ -205,8 +263,25 @@ function addTrails(scene, numRays, initialPositions) {
     }
 
     trailGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
-    const trail = new THREE.Line(trailGeometry, trailMaterial)
+
+    let trailMaterial; 
+    if (MOVIENUMBER == 4) {
+      if (i % 2 == 0) {
+        trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
+      } else {
+        trailMaterial = new THREE.LineDashedMaterial({
+          color: 0xffaa00,
+          dashSize: 0.5,
+          gapSize: 2,
+          linewidth: 2
+        });
+      }
+    } else {
+      trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
+    }
+
+    const trail = new THREE.Line(trailGeometry, trailMaterial);
+    trail.computeLineDistances();
 
     trails.push(trail);
     scene.add(trail);
@@ -230,6 +305,28 @@ function addSkyDome(scene, textureLoader) {
   skyDome.rotateX(Math.PI/2.0)
 
   scene.add(skyDome);
+}
+
+function addEquatorialDisk(scene) {
+  const radiusTop = 40;        // Radius at the top of the cylinder
+  const radiusBottom = 40;     // Radius at the bottom of the cylinder
+  const height = 0.01;        // Height of the cylinder (very small to make it a disk)
+  const radialSegments = 100;  // Number of segmented faces around the circumference of the disk
+  const heightSegments = 1;   // Number of segmented faces along the height of the cylinder
+  const openEnded = false;    // Whether the ends are open or capped
+
+  const diskGeometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded);
+  const diskMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0x808080, 
+    transparent: true,
+    opacity: 0.25,
+    side: THREE.DoubleSide 
+  });
+  const diskMesh = new THREE.Mesh(diskGeometry, diskMaterial);
+
+  diskMesh.rotation.x = Math.PI / 2;
+
+  scene.add(diskMesh);
 }
 
 function addBlackHole(scene) {
@@ -267,4 +364,12 @@ function addSpinAxis(scene) {
   );
   
   scene.add(spinAxis)
+}
+
+function cartesianToSpherical(x, y, z) {
+  const r = Math.sqrt(x * x + y * y + z * z);
+  const theta = Math.acos(z / r);    // acos to get the polar angle
+  const phi = Math.atan2(y, x);  // atan2 handles the quadrant correctly
+
+  return { r, theta, phi };
 }

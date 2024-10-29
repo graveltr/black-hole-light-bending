@@ -5,9 +5,20 @@
 		<title>My first three.js app</title>
 		<style>
 			body { margin: 0; }
+        	canvas { display: block; }
+			#ui {
+				position: absolute;
+				top: 10px;
+				left: 10px;
+				padding: 10px;
+				background: rgba(255, 255, 255, 0.8);
+				border-radius: 4px;
+				font-family: Arial, sans-serif;
+			}
 		</style>
 	</head>
 	<body>
+		<div id="ui"><span id="rotation-info"></span></div>
 		<script src="ccapture.js/src/CCapture.js"></script>
 		<script src="ccapture.js/src/download.js"></script>
 		<script src="ccapture.js/src/webm-writer-0.2.0.js"></script>
