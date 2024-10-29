@@ -140,6 +140,15 @@ function process(cameraTrajectory, rayTrajectories) {
                                                           rayTrajectories[currProjectedTrajectoryIdx][currTrajectoryCoordIdx][2]);
       updateTrail(rayMeshes[currProjectedTrajectoryIdx], trails[currProjectedTrajectoryIdx]);
 
+      // Update the UI
+      let currentSphericalCoordinates = cartesianToSpherical( rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][0],
+                                                              rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][1],
+                                                              rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][2]);
+      let currentTime = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][3]);
+      let currentPhi = Math.abs(Number(currentSphericalCoordinates.phi));
+
+      rotationInfoElement.textContent = `Δφ\t= ${currentPhi.toFixed(2)}\nΔt\t= ${currentTime.toFixed(2)}`;
+
       /* 
       * For movie 4, we animate the trajectories two at a time (the trajectory and its equatorial projection), 
       * with pairs proceeding in sequence.
@@ -151,14 +160,6 @@ function process(cameraTrajectory, rayTrajectories) {
       }
 
       cameraIdx += 1;
-
-      // Update the UI
-      let currentSphericalCoordinates = cartesianToSpherical( rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][0],
-                                                              rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][1],
-                                                              rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][2]);
-
-      console.log(Number(currentSphericalCoordinates.phi.toFixed(2)))
-      rotationInfoElement.textContent = `phi: ${Number(currentSphericalCoordinates.phi.toFixed(2))}`;
     } else {
       camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); 
       camera.lookAt(cameraCenter);
@@ -270,7 +271,7 @@ function addTrails(scene, numRays, initialPositions) {
         trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
       } else {
         trailMaterial = new THREE.LineDashedMaterial({
-          color: 0xffaa00,
+          color: 0xffffff,
           dashSize: 0.5,
           gapSize: 2,
           linewidth: 2
