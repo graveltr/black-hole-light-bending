@@ -147,7 +147,7 @@ function process(cameraTrajectory, rayTrajectories) {
       let currentTime = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][3]);
       let currentPhi = Math.abs(Number(currentSphericalCoordinates.phi));
 
-      rotationInfoElement.textContent = `Δφ\t= ${currentPhi.toFixed(2)}\nΔt\t= ${currentTime.toFixed(2)}`;
+      rotationInfoElement.textContent = `Δϕ\t= ${currentPhi.toFixed(2)}\nΔt\t= ${currentTime.toFixed(2)}`;
 
       /* 
       * For movie 4, we animate the trajectories two at a time (the trajectory and its equatorial projection), 
