@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 		<meta charset="utf-8">
 		<title>My first three.js app</title>
 		<style>
+			/*
 			body { margin: 0; }
         	canvas { display: block; }
 			#ui {
@@ -16,10 +19,56 @@
 				font-family: Arial, sans-serif;
 				white-space: pre;
 			}
+			*/
+			body {
+				margin: 0;
+				overflow: hidden;
+				font-family: 'Roboto', sans-serif;
+			}
+			#readouts {
+				display: flex;
+				flex-direction: column;
+				position: absolute;
+				top: 60px;
+				left: 60px;
+				background: rgba(0, 0, 0, 0.7);
+				color: #ffffff;
+				padding: 10px;
+				border-radius: 5px;
+				font-family: 'Roboto Mono', monospace; /* Use Roboto Mono for readouts */
+				font-weight: 500; /* Make the font thicker */
+				white-space: pre; /* Ensure white spaces are preserved */
+				font-size: larger;
+			}
+			#readouts .readout-item {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				height: 40px;
+			}
+			#readouts .label {
+				margin-right: 10px;
+			}
+			#readouts .value {
+				text-align: right;
+				display: inline-block;
+				min-width: 40px; /* Adjust based on the expected maximum length of numbers */
+				font-family: 'Roboto Mono', monospace; /* Use Roboto Mono for readouts */
+				font-size: larger;
+				font-weight: 500; /* Make the font thicker */
+				position: relative;
+			}
 		</style>
 	</head>
 	<body>
-		<div id="ui"><span id="rotation-info"></span></div>
+		<div id="readouts">
+			<div class="readout-item">
+            	<span class="label">Δϕ = </span> <pre id="deltaPhiReadout" class="value">0.00</pre>
+        	</div>
+			<div class="readout-item">
+            	<span class="label">Δt = </span> <pre id="deltaTReadout" class="value">0.00</pre> 
+        	</div>
+    	</div>
 		<script src="ccapture.js/src/CCapture.js"></script>
 		<script src="ccapture.js/src/download.js"></script>
 		<script src="ccapture.js/src/webm-writer-0.2.0.js"></script>

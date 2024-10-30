@@ -94,7 +94,8 @@ function process(cameraTrajectory, rayTrajectories) {
   const rayMeshes = addRays(scene, rayTrajectories.length);
   const trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
   if (MOVIENUMBER == 2) { addRadialAxis(scene); }
-  if (MOVIENUMBER == 4) { addEquatorialDisk(scene); }
+  // if (MOVIENUMBER == 4) { addEquatorialDisk(scene); }
+  if (MOVIENUMBER == 4) { addConcentricCircles(scene); }
 
   const capturer = new CCapture({
     format: 'webm',
@@ -112,7 +113,8 @@ function process(cameraTrajectory, rayTrajectories) {
   camera.up.set(0, 0, 1);
 
   // UI references
-  const rotationInfoElement = document.getElementById('rotation-info');
+  const deltaPhiReadout  = document.getElementById('deltaPhiReadout');
+  const deltaTReadout    = document.getElementById('deltaTReadout');
 
   // Function that runs every frame.
   function animate() {
@@ -145,9 +147,11 @@ function process(cameraTrajectory, rayTrajectories) {
                                                               rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][1],
                                                               rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][2]);
       let currentTime = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][3]);
-      let currentPhi = Math.abs(Number(currentSphericalCoordinates.phi));
+      let currentPhiInRadians = Math.abs(Number(currentSphericalCoordinates.phi));
+      let currentPhiInDegs = radiansToDegrees(currentPhiInRadians);
 
-      rotationInfoElement.textContent = `Δϕ\t= ${currentPhi.toFixed(2)}\nΔt\t= ${currentTime.toFixed(2)}`;
+      deltaPhiReadout.innerText = formatNumber(currentPhiInDegs) + '°';
+      deltaTReadout.innerText   = formatNumber(currentTime) + ' ';
 
       /* 
       * For movie 4, we animate the trajectories two at a time (the trajectory and its equatorial projection), 
@@ -330,6 +334,35 @@ function addEquatorialDisk(scene) {
   scene.add(diskMesh);
 }
 
+function addConcentricCircles(scene) {
+  const N = 20;
+  const radiusBase = 10;
+  const radiusSpacing = 2;
+
+  for (let i = 0; i < N; i++) {
+    const radius = radiusBase + i * radiusSpacing;
+
+    const curve = new THREE.EllipseCurve(
+      0,  0,            // ax, aY
+      radius, radius,           // xRadius, yRadius
+      0,  2 * Math.PI,  // aStartAngle, aEndAngle
+      false,            // aClockwise
+      0                 // aRotation
+    );
+
+    const points = curve.getPoints(100); // 50 points for smoothness
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ 
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.25,
+    });
+    const line = new THREE.Line(geometry, material);
+
+    scene.add(line);
+  }
+}
+
 function addBlackHole(scene) {
   const blackholeMesh = new THREE.Mesh(
     new THREE.SphereGeometry(10.4, 64, 64), 
@@ -373,4 +406,18 @@ function cartesianToSpherical(x, y, z) {
   const phi = Math.atan2(y, x);  // atan2 handles the quadrant correctly
 
   return { r, theta, phi };
+}
+
+function radiansToDegrees(theta) {
+  return theta * (180.0 / Math.PI);
+}
+
+// Helper function to pad a number to align by decimal point
+function formatNumber(num, precision = 2) {
+  let [intPart, decPart] = num.toFixed(precision).split('.');
+  console.log(intPart);
+  console.log(decPart);
+  intPart = intPart.padStart(3, ' '); // Adjust based on maximum expected length
+  console.log(intPart);
+  return `${intPart}.${decPart}`;
 }
