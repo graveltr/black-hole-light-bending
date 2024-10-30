@@ -35,16 +35,18 @@
 				color: #ffffff;
 				padding: 10px;
 				border-radius: 5px;
-				font-family: 'Roboto Mono', monospace; /* Use Roboto Mono for readouts */
-				font-weight: 500; /* Make the font thicker */
-				white-space: pre; /* Ensure white spaces are preserved */
-				font-size: larger;
+/*  				font-family: 'Roboto Mono', monospace;  
+				font-weight: 500;  */
+				font-family: DejaVu Sans Mono, monospace;
+				font-weight: bold;
+				white-space: pre; 
+				font-size: 60px;
 			}
 			#readouts .readout-item {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
-				height: 40px;
+				height: 80px;
 			}
 			#readouts .label {
 				margin-right: 10px;
@@ -53,9 +55,11 @@
 				text-align: right;
 				display: inline-block;
 				min-width: 40px; /* Adjust based on the expected maximum length of numbers */
-				font-family: 'Roboto Mono', monospace; /* Use Roboto Mono for readouts */
-				font-size: larger;
-				font-weight: 500; /* Make the font thicker */
+/* 				font-family: 'Roboto Mono', monospace; 
+				font-size: larger; */
+				font-family: DejaVu Sans Mono, monospace;
+				font-weight: bold;
+				font-size: 60px;
 				position: relative;
 			}
 		</style>
@@ -63,10 +67,10 @@
 	<body>
 		<div id="readouts">
 			<div class="readout-item">
-            	<span class="label">Δϕ = </span> <pre id="deltaPhiReadout" class="value">0.00</pre>
+            	<span class="label">Δϕ =</span><pre id="deltaPhiReadout" class="value">0.00</pre>
         	</div>
 			<div class="readout-item">
-            	<span class="label">Δt = </span> <pre id="deltaTReadout" class="value">0.00</pre> 
+            	<span class="label">Δt =</span><pre id="deltaTReadout" class="value">0.00</pre> 
         	</div>
     	</div>
 		<script src="ccapture.js/src/CCapture.js"></script>
