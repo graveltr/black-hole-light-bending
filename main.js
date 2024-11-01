@@ -50,6 +50,7 @@ if (MOVIENUMBER == 1) {
   colors.push(0x17BEBB);
 
   csvUrls.push('trajectories/tau/cameraTrajectory.csv');
+  csvUrls.push('trajectories/tau/ray1FullyTraced.csv');
   csvUrls.push('trajectories/tau/ray1.csv');
   csvUrls.push('trajectories/tau/ray1projection.csv');
 } else {
@@ -87,15 +88,26 @@ function process(cameraTrajectory, rayTrajectories) {
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
 
+  let fullyTracedTrajectory;
+  if (MOVIENUMBER == 4) {
+    fullyTracedTrajectory = rayTrajectories[0]; // The first ray is the fully traced trajectory
+    rayTrajectories = rayTrajectories.slice(1, rayTrajectories.length); // The rest are the segment + projection of segment
+  }
+
   // Add all of the scene elements.
   addBlackHole(scene);
   addSpinAxis(scene);
   addSkyDome(scene, textureLoader);
   const rayMeshes = addRays(scene, rayTrajectories.length);
-  const trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
+  let trails 
+  if (MOVIENUMBER == 4) {
+    trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
+  } else {
+    trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
+  }
   if (MOVIENUMBER == 2) { addRadialAxis(scene); }
-  // if (MOVIENUMBER == 4) { addEquatorialDisk(scene); }
   if (MOVIENUMBER == 4) { addConcentricCircles(scene); }
+  if (MOVIENUMBER == 4) { addFullyTracedRay(scene, fullyTracedTrajectory); }
 
   const capturer = new CCapture({
     format: 'webm',
@@ -108,6 +120,12 @@ function process(cameraTrajectory, rayTrajectories) {
   let currTrajectoryIdx = 0; // These indices are used for movie 4
   let currTrajectoryCoordIdx = 0; // These indices are used for movie 4
   let cameraIdx = 0; // These indices are used for movie 4
+
+  let startTime, startPhi;
+  if (MOVIENUMBER == 4) {
+    startTime = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][3]);
+    startPhi  = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][4]);
+  }
 
   let animationId;
   camera.up.set(0, 0, 1);
@@ -143,15 +161,15 @@ function process(cameraTrajectory, rayTrajectories) {
       updateTrail(rayMeshes[currProjectedTrajectoryIdx], trails[currProjectedTrajectoryIdx]);
 
       // Update the UI
-      let currentSphericalCoordinates = cartesianToSpherical( rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][0],
-                                                              rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][1],
-                                                              rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][2]);
-      let currentTime = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][3]);
-      let currentPhiInRadians = Math.abs(Number(currentSphericalCoordinates.phi));
-      let currentPhiInDegs = radiansToDegrees(currentPhiInRadians);
+      let currentTime         = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][3]);
+      let currentPhiInRadians = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][4]);
 
-      deltaPhiReadout.innerText = formatNumber(currentPhiInDegs) + '°';
-      deltaTReadout.innerText   = formatNumber(currentTime) + ' ';
+      let deltaT              = Math.abs(currentTime - startTime);
+      let deltaPhiInRadians   = Math.abs(currentPhiInRadians - startPhi);
+      let deltaPhiInDegs      = radiansToDegrees(deltaPhiInRadians);
+
+      deltaPhiReadout.innerText = formatNumber(deltaPhiInDegs) + '°';
+      deltaTReadout.innerText   = formatNumber(deltaT) + ' ';
 
       /* 
       * For movie 4, we animate the trajectories two at a time (the trajectory and its equatorial projection), 
@@ -272,7 +290,7 @@ function addTrails(scene, numRays, initialPositions) {
     let trailMaterial; 
     if (MOVIENUMBER == 4) {
       if (i % 2 == 0) {
-        trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
+        trailMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 3 });
       } else {
         trailMaterial = new THREE.LineDashedMaterial({
           color: 0xffffff,
@@ -355,12 +373,28 @@ function addConcentricCircles(scene) {
     const material = new THREE.LineBasicMaterial({ 
       color: 0xffffff,
       transparent: true,
-      opacity: 0.25,
+      opacity: 0.2,
     });
     const line = new THREE.Line(geometry, material);
 
     scene.add(line);
   }
+}
+
+function addFullyTracedRay(scene, fullyTracedTrajectory) {
+  const positions = fullyTracedTrajectory.flat();
+
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+  const material = new THREE.LineBasicMaterial({ 
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.25,
+  });
+  const line = new THREE.Line(geometry, material);
+
+  scene.add(line);
 }
 
 function addBlackHole(scene) {
@@ -415,9 +449,6 @@ function radiansToDegrees(theta) {
 // Helper function to pad a number to align by decimal point
 function formatNumber(num, precision = 2) {
   let [intPart, decPart] = num.toFixed(precision).split('.');
-  console.log(intPart);
-  console.log(decPart);
   intPart = intPart.padStart(3, ' '); // Adjust based on maximum expected length
-  console.log(intPart);
   return `${intPart}.${decPart}`;
 }
