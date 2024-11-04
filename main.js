@@ -46,8 +46,15 @@ if (MOVIENUMBER == 1) {
   csvUrls.push('trajectories/equatorial-rays/ray1.csv');
   csvUrls.push('trajectories/equatorial-rays/ray2.csv');
 } else if (MOVIENUMBER == 4) {
-  colors.push(0x32CD32);
-  colors.push(0x17BEBB);
+  colors.push(0x9067C6);
+  colors.push(0x8D86C9);
+  colors.push(0xF7ECE1);
+  colors.push(0x9067C6);
+  colors.push(0x8D86C9);
+  colors.push(0xF7ECE1);
+  colors.push(0x9067C6);
+  colors.push(0x8D86C9);
+  colors.push(0xF7ECE1);
 
   csvUrls.push('trajectories/tau/cameraTrajectory.csv');
   csvUrls.push('trajectories/tau/ray1FullyTraced.csv');
@@ -120,6 +127,7 @@ function process(cameraTrajectory, rayTrajectories) {
   let currTrajectoryIdx = 0; // These indices are used for movie 4
   let currTrajectoryCoordIdx = 0; // These indices are used for movie 4
   let cameraIdx = 0; // These indices are used for movie 4
+  let colorIdx = 1; // These indices are used for movie 4
 
   let startTime, startPhi;
   if (MOVIENUMBER == 4) {
@@ -171,6 +179,23 @@ function process(cameraTrajectory, rayTrajectories) {
       deltaPhiReadout.innerText = formatNumber(deltaPhiInDegs) + '°';
       deltaTReadout.innerText   = formatNumber(deltaT) + ' ';
 
+      // If the current position is an equatorial crossing, reset various counters
+      if (Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][5]) === 1) {
+        startTime = currentTime;
+        startPhi = currentPhiInRadians;
+
+        // Reset the trail of the projection
+        resetTrail(rayMeshes[currProjectedTrajectoryIdx], trails[currProjectedTrajectoryIdx]);
+        trails[currProjectedTrajectoryIdx].material.color.set(colors[colorIdx]);
+
+        // Create a new trail for the next segment and replace the old one so that it no longer 
+        // receives animation updates.
+        let returnedTrail = addTrail(scene, rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx], colors[colorIdx]);
+        trails[currTrajectoryIdx] = returnedTrail;
+
+        colorIdx++;
+      }
+
       /* 
       * For movie 4, we animate the trajectories two at a time (the trajectory and its equatorial projection), 
       * with pairs proceeding in sequence.
@@ -195,7 +220,6 @@ function process(cameraTrajectory, rayTrajectories) {
       }
 	    i = i + 1;
     }
-
 	  renderer.render( scene, camera );
 
     if (CAPTUREON == 1) { 
@@ -247,6 +271,24 @@ function updateTrail(object, trail) {
   trail.computeLineDistances();
 }
 
+function resetTrail(object, trail) {
+  const trailGeometry = trail.geometry;
+  const positionAttribute = trailGeometry.attributes.position;
+
+  for (let i = 0; i < positionAttribute.count; i++) {
+    const currentIndex = i * 3;
+    positionAttribute.array[currentIndex] = object.position.x;
+    positionAttribute.array[currentIndex + 1] = object.position.y;
+    positionAttribute.array[currentIndex + 2] = object.position.z;
+  }
+
+  // Notify Three.js that the positions need updating.
+  positionAttribute.needsUpdate = true;
+
+  trail.computeLineDistances();
+
+}
+
 function addRays(scene, numRays) {
   const rayMeshes = [];
 
@@ -290,10 +332,10 @@ function addTrails(scene, numRays, initialPositions) {
     let trailMaterial; 
     if (MOVIENUMBER == 4) {
       if (i % 2 == 0) {
-        trailMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 3 });
+        trailMaterial = new THREE.LineBasicMaterial({ color: colors[0], linewidth: 3 });
       } else {
         trailMaterial = new THREE.LineDashedMaterial({
-          color: 0xffffff,
+          color: colors[0],
           dashSize: 0.5,
           gapSize: 2,
           linewidth: 2
@@ -311,6 +353,24 @@ function addTrails(scene, numRays, initialPositions) {
   }
 
   return trails;
+}
+
+function addTrail(scene, initialPosition, color) {
+  const trailGeometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(MAXPOINTS * 3);
+
+  for (let j = 0; j < positions.length; j += 3) {
+    positions[j] = initialPosition[0];
+    positions[j+1] = initialPosition[1];
+    positions[j+2] = initialPosition[2];
+  }
+  trailGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const trailMaterial = new THREE.LineBasicMaterial({ color: color, linewidth: 3 });
+  let trail = new THREE.Line(trailGeometry, trailMaterial);
+
+  scene.add(trail);
+  return trail;
 }
 
 function addSkyDome(scene, textureLoader) {
