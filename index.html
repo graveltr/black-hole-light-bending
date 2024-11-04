@@ -6,73 +6,87 @@
 		<meta charset="utf-8">
 		<title>My first three.js app</title>
 		<style>
-			/*
-			body { margin: 0; }
-        	canvas { display: block; }
-			#ui {
-				position: absolute;
-				top: 10px;
-				left: 10px;
-				padding: 10px;
-				background: rgba(255, 255, 255, 0.8);
-				border-radius: 4px;
-				font-family: Arial, sans-serif;
-				white-space: pre;
-			}
-			*/
 			body {
 				margin: 0;
 				overflow: hidden;
 				font-family: 'Roboto', sans-serif;
 			}
-			#readouts {
+			.readout-panel {
 				display: flex;
 				flex-direction: column;
 				position: absolute;
-				top: 60px;
-				left: 60px;
 				background: rgba(0, 0, 0, 0.7);
 				color: #ffffff;
-				padding: 10px;
-				border-radius: 5px;
-/*  				font-family: 'Roboto Mono', monospace;  
-				font-weight: 500;  */
-/* 				font-family: DejaVu Sans Mono, monospace; */
+				padding: 20px;
+				border-radius: 10px;
 				font-family: Arial, Helvetica, sans-serif;
 				font-weight: bold;
 				white-space: pre; 
 				font-size: 60px;
 			}
-			#readouts .readout-item {
+			#left-readout-panel {
+				top: 60px;
+				left: 60px;
+			}
+			#right-readout-panel {
+				top: 60px;
+				right: 60px;
+			}
+			.readout-panel .readout-item {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
 				height: 80px;
 			}
-			#readouts .label {
+			.readout-item .label {
 				margin-right: 10px;
 			}
-			#readouts .value {
+			.readout-item .value {
 				text-align: right;
 				display: inline-block;
-				min-width: 40px; /* Adjust based on the expected maximum length of numbers */
-/* 				font-family: 'Roboto Mono', monospace; 
-				font-size: larger; */
-/* 				font-family: DejaVu Sans Mono, monospace; */
+				min-width: 40px; 
 				font-family: Arial, Helvetica, sans-serif;
 				font-weight: bold;
 				font-size: 60px;
 				position: relative;
 			}
+			@keyframes pulse {
+				0% {
+					opacity: 0.2;
+				}
+				50% {
+					opacity: 1; /* Reach full opacity at the mid-point of the animation */
+				}
+				100% {
+					opacity: 0.2;
+				}
+			}
+			.pulse-text {
+				animation-name: pulse;
+				animation-duration: 0.75s;
+				animation-iteration-count: 3; /* Pulse only once */
+				animation-timing-function: ease-in-out;
+			}
+			.transparent {
+				opacity: 0.0;
+			}
 		</style>
 	</head>
 	<body>
-		<div id="readouts">
+		<div id="left-readout-panel" class="readout-panel">
 			<div class="readout-item">
             	<span class="label">Δϕ =</span><pre id="deltaPhiReadout" class="value">0.00</pre>
         	</div>
 			<div class="readout-item">
             	<span class="label">Δt  =</span><pre id="deltaTReadout" class="value">0.00</pre> 
+        	</div>
+    	</div>
+		<div id="right-readout-panel" class="readout-panel">
+			<div id="delta-readout-item" class="readout-item">
+            	<span class="label">δ = </span><pre id="delta-readout-value" class="value transparent">0.00</pre>
+        	</div>
+			<div id="tau-readout-item" class="readout-item">
+            	<span class="label">τ  = </span><pre id="tau-readout-value" class="value transparent">0.00</pre>
         	</div>
     	</div>
 		<script src="ccapture.js/src/CCapture.js"></script>

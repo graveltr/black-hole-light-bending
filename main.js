@@ -46,15 +46,15 @@ if (MOVIENUMBER == 1) {
   csvUrls.push('trajectories/equatorial-rays/ray1.csv');
   csvUrls.push('trajectories/equatorial-rays/ray2.csv');
 } else if (MOVIENUMBER == 4) {
-  colors.push(0x9067C6);
-  colors.push(0x8D86C9);
-  colors.push(0xF7ECE1);
-  colors.push(0x9067C6);
-  colors.push(0x8D86C9);
-  colors.push(0xF7ECE1);
-  colors.push(0x9067C6);
-  colors.push(0x8D86C9);
-  colors.push(0xF7ECE1);
+  colors.push(0xCBFF4D);
+  colors.push(0x84DD63);
+  colors.push(0x6BAA75);
+  colors.push(0xCBFF4D);
+  colors.push(0x84DD63);
+  colors.push(0x6BAA75);
+  colors.push(0xCBFF4D);
+  colors.push(0x84DD63);
+  colors.push(0x6BAA75);
 
   csvUrls.push('trajectories/tau/cameraTrajectory.csv');
   csvUrls.push('trajectories/tau/ray1FullyTraced.csv');
@@ -141,6 +141,11 @@ function process(cameraTrajectory, rayTrajectories) {
   // UI references
   const deltaPhiReadout  = document.getElementById('deltaPhiReadout');
   const deltaTReadout    = document.getElementById('deltaTReadout');
+  const deltaReadoutItem = document.getElementById('delta-readout-item');
+  const deltaReadoutValue= document.getElementById('delta-readout-value');
+  const tauReadoutItem   = document.getElementById('tau-readout-item');
+  const tauReadoutValue  = document.getElementById('tau-readout-value');
+  const rightReadoutPanel= document.getElementById('right-readout-panel');
 
   // Function that runs every frame.
   function animate() {
@@ -181,6 +186,32 @@ function process(cameraTrajectory, rayTrajectories) {
 
       // If the current position is an equatorial crossing, reset various counters
       if (Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][5]) === 1) {
+        deltaReadoutValue.innerText = formatNumber(deltaPhiInDegs) + '°';
+        // We hard code here since NDSolve isn't sufficiently precise for constant tau
+        tauReadoutValue.innerText   = formatNumber(16.85) + ' ';
+
+        deltaReadoutValue.classList.remove('transparent');
+        tauReadoutValue.classList.remove('transparent');
+
+        /* Pulse the text */
+        deltaReadoutValue.classList.add('pulse-text');
+        tauReadoutValue.classList.add('pulse-text');
+
+        function onDeltaPulseAnimationEnd() {
+          deltaReadoutValue.classList.remove('pulse-text');
+        }
+
+        function onTauPulseAnimationEnd() {
+          tauReadoutValue.classList.remove('pulse-text');
+        }
+
+        deltaReadoutValue.removeEventListener('animationend', onDeltaPulseAnimationEnd)
+        deltaReadoutValue.addEventListener('animationend', onDeltaPulseAnimationEnd)
+
+        tauReadoutValue.removeEventListener('animationend', onTauPulseAnimationEnd)
+        tauReadoutValue.addEventListener('animationend', onTauPulseAnimationEnd)
+        /* Pulse the text */
+
         startTime = currentTime;
         startPhi = currentPhiInRadians;
 
