@@ -113,8 +113,11 @@ function process(cameraTrajectory, rayTrajectories) {
     trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
   }
   if (MOVIENUMBER == 2) { addRadialAxis(scene); }
-  if (MOVIENUMBER == 4) { addConcentricCircles(scene); }
+  // if (MOVIENUMBER == 4) { addConcentricCircles(scene); }
   if (MOVIENUMBER == 4) { addFullyTracedRay(scene, fullyTracedTrajectory); }
+
+  let redRingMaterial; // need a reference to the red ring material to make it pulse later
+  if (MOVIENUMBER == 4) { redRingMaterial = addRedRing(scene); }
 
   const capturer = new CCapture({
     format: 'webm',
@@ -146,6 +149,13 @@ function process(cameraTrajectory, rayTrajectories) {
   const tauReadoutItem   = document.getElementById('tau-readout-item');
   const tauReadoutValue  = document.getElementById('tau-readout-value');
   const rightReadoutPanel= document.getElementById('right-readout-panel');
+
+  const pulseAngularVelocity = 10.0;
+  const pulsePhase = 0.25 * pulseAngularVelocity; // Shift in seconds
+  let redRingIsPulsing = false;
+  let startPulseTime;
+  const endPulseTime = 2.0; // Seconds
+  const numPulses = 3.0;
 
   // Function that runs every frame.
   function animate() {
@@ -183,6 +193,22 @@ function process(cameraTrajectory, rayTrajectories) {
 
       deltaPhiReadout.innerText = formatNumber(deltaPhiInDegs) + '°';
       deltaTReadout.innerText   = formatNumber(deltaT) + ' ';
+
+      const currPulseTime = performance.now() * 0.001; // Convert to seconds
+
+      // Pulse red ring logic 
+      if (redRingIsPulsing) {
+        const pulseTime = currPulseTime - startPulseTime;
+        const period = (2.0 * Math.PI) / pulseAngularVelocity;
+        const numCycles = pulseTime / period;
+
+        if (numCycles < numPulses) {
+          redRingMaterial.opacity = (Math.sin(pulseAngularVelocity * pulseTime + pulsePhase) + 1.0) / 2.0;
+        } else {
+          redRingMaterial.opacity = 1.0;
+          redRingIsPulsing = false;
+        }
+      }
 
       // If the current position is an equatorial crossing, reset various counters
       if (Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][5]) === 1) {
@@ -225,6 +251,10 @@ function process(cameraTrajectory, rayTrajectories) {
         trails[currTrajectoryIdx] = returnedTrail;
 
         colorIdx++;
+
+        // Pulse red ring logic 
+        redRingIsPulsing = true;
+        startPulseTime = currPulseTime;
       }
 
       /* 
@@ -441,6 +471,33 @@ function addEquatorialDisk(scene) {
   diskMesh.rotation.x = Math.PI / 2;
 
   scene.add(diskMesh);
+}
+
+function addRedRing(scene) {
+  const epsilon = 1.0;
+  const rcrit = 21.92;
+  const radius = rcrit + epsilon;
+  const curve = new THREE.EllipseCurve(
+    0,  0,            // ax, aY
+    radius, radius,   // xRadius, yRadius
+    0,  2 * Math.PI,  // aStartAngle, aEndAngle
+    false,            // aClockwise
+    0                 // aRotation
+  );
+
+  const points = curve.getPoints(1000);
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const material = new THREE.LineBasicMaterial({ 
+    color: 0xFF3c38,
+    linewidth: 3.0,
+    transparent: true,
+    opacity: 1.0,
+  });
+  const line = new THREE.Line(geometry, material);
+
+  scene.add(line);
+
+  return material; 
 }
 
 function addConcentricCircles(scene) {
