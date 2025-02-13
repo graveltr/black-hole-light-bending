@@ -3,13 +3,16 @@
 	<head>
 		<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Reddit+Mono:wght@200..900&display=swap" rel="stylesheet">
+
 		<meta charset="utf-8">
 		<title>My first three.js app</title>
 		<style>
 			body {
 				margin: 0;
 				overflow: hidden;
-				font-family: 'Roboto', sans-serif;
+				font-family: "Noto Mono", monospace;
 			}
 			.readout-panel {
 				display: flex;
@@ -19,7 +22,7 @@
 				color: #ffffff;
 				padding: 20px;
 				border-radius: 10px;
-				font-family: Arial, Helvetica, sans-serif;
+				font-family: "Noto Mono", monospace;
 				font-weight: bold;
 				white-space: pre; 
 				font-size: 60px;
@@ -45,7 +48,7 @@
 				text-align: right;
 				display: inline-block;
 				min-width: 40px; 
-				font-family: Arial, Helvetica, sans-serif;
+				font-family: "Noto Mono", monospace;
 				font-weight: bold;
 				font-size: 60px;
 				position: relative;
@@ -75,10 +78,10 @@
 	<body>
 		<div id="left-readout-panel" class="readout-panel">
 			<div class="readout-item">
-            	<span class="label">Δϕ =</span><pre id="deltaPhiReadout" class="value">0.00</pre>
+            	<span class="label">Δϕ = </span><pre id="deltaPhiReadout" class="value">0.00</pre>
         	</div>
 			<div class="readout-item">
-            	<span class="label">Δt  =</span><pre id="deltaTReadout" class="value">0.00</pre> 
+            	<span class="label">Δt = </span><pre id="deltaTReadout" class="value">0.00</pre> 
         	</div>
     	</div>
 		<div id="right-readout-panel" class="readout-panel">
@@ -86,13 +89,13 @@
             	<span class="label">δ = </span><pre id="delta-readout-value" class="value transparent">0.00</pre>
         	</div>
 			<div id="tau-readout-item" class="readout-item">
-            	<span class="label">τ  = </span><pre id="tau-readout-value" class="value transparent">0.00</pre>
+            	<span class="label">τ = </span><pre id="tau-readout-value" class="value transparent">0.00</pre>
         	</div>
     	</div>
 		<script src="ccapture.js/src/CCapture.js"></script>
 		<script src="ccapture.js/src/download.js"></script>
 		<script src="ccapture.js/src/webm-writer-0.2.0.js"></script>
-		<script type="module" src="/main.js"></script>
+		<script type="module" src="/sequential-crossing-times.js"></script>
 		<!--  <script type="module" src="/embeddingDiagram.js"></script> -->
 	</body>
 </html>

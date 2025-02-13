@@ -4,74 +4,18 @@ import { parseCSV } from './utilities.js';
 // Grab environment variables which I use as CLI arguments / switches.
 const CAPTUREON = import.meta.env.VITE_CAPTUREON;
 const CAPTURESECONDS = import.meta.env.VITE_CAPTURESECONDS;
-const MOVIENUMBER = import.meta.env.VITE_MOVIENUMBER;
 const MAXPOINTS = import.meta.env.VITE_MAXPOINTS;
 
-/*
-* Depending on the movie we are rendering, we set up the various ray 
-* trajectory colors. We also point to the MMA generated ray trajectories 
-* which are stored as csv files.
-*/
 const colors = [];
+colors.push(0xffffff);
+colors.push(0x3F84E5);
+colors.push(0xBAFF29);
+
 const csvUrls = [];
-if (MOVIENUMBER == 1) {
-  colors.push(0xff0000);
-  colors.push(0x00ff00);
-  colors.push(0x48B8D0);
-
-  csvUrls.push('trajectories/subsupercritical/cameraTrajectory.csv');
-  csvUrls.push('trajectories/subsupercritical/ray1.csv');
-  csvUrls.push('trajectories/subsupercritical/ray2.csv');
-  csvUrls.push('trajectories/subsupercritical/ray3.csv');
-} else if (MOVIENUMBER == 2) {
-  colors.push(0xff0000);
-  colors.push(0xff0000);
-  colors.push(0x00ff00);
-  colors.push(0x00ff00);
-  colors.push(0x48B8D0);
-  colors.push(0x48B8D0);
-
-  csvUrls.push('trajectories/pairwise/cameraTrajectory.csv');
-  csvUrls.push('trajectories/pairwise/ray1.csv');
-  csvUrls.push('trajectories/pairwise/ray2.csv');
-  csvUrls.push('trajectories/pairwise/ray3.csv');
-  csvUrls.push('trajectories/pairwise/ray4.csv');
-  csvUrls.push('trajectories/pairwise/ray5.csv');
-  csvUrls.push('trajectories/pairwise/ray6.csv');
-} else if (MOVIENUMBER == 3) {
-  colors.push(0x32CD32);
-  colors.push(0x17BEBB);
-
-  csvUrls.push('trajectories/equatorial-rays/cameraTrajectory.csv');
-  csvUrls.push('trajectories/equatorial-rays/ray1.csv');
-  csvUrls.push('trajectories/equatorial-rays/ray2.csv');
-} else if (MOVIENUMBER == 4) {
-  colors.push(0xffffff);
-  colors.push(0x3F84E5);
-  colors.push(0xBAFF29);
-  colors.push(0xffffff);
-  colors.push(0x3F84E5);
-  colors.push(0xBAFF29);
-  colors.push(0xffffff);
-  colors.push(0x3F84E5);
-  colors.push(0xBAFF29);
-
-  csvUrls.push('trajectories/tau/cameraTrajectory.csv');
-  csvUrls.push('trajectories/tau/ray1FullyTraced.csv');
-  csvUrls.push('trajectories/tau/ray1.csv');
-  csvUrls.push('trajectories/tau/ray1projection.csv');
-} else if (MOVIENUMBER == 5) {
-  colors.push(0xffffff);
-  colors.push(0x3F84E5);
-  colors.push(0xBAFF29);
-
-  csvUrls.push('trajectories/tau/cameraTrajectory.csv');
-  csvUrls.push('trajectories/sequential-cross-times/ray1.csv');
-  csvUrls.push('trajectories/sequential-cross-times/ray2.csv');
-  csvUrls.push('trajectories/sequential-cross-times/ray3.csv');
-}else {
-  throw new Error('Unknown movie number!');
-}
+csvUrls.push('trajectories/tau/cameraTrajectory.csv');
+csvUrls.push('trajectories/sequential-crossing-times/ray1.csv');
+csvUrls.push('trajectories/sequential-crossing-times/ray2.csv');
+csvUrls.push('trajectories/sequential-crossing-times/ray3.csv');
 
 // Map over the URLs and return an array of promises.
 const fetchPromises = csvUrls.map(url =>
@@ -95,6 +39,22 @@ Promise.all(fetchPromises)
 * trajectories, which themselves are arrays of vectors (x,y,z coordinates).
 */
 function process(cameraTrajectory, rayTrajectories) {
+  console.log("hello world");
+
+  /* 
+  *  For this animation, we preprocess the ray trajectories. In particular,
+  *  we pad all trajectories out to the combined length of all the trajectories,
+  *  such that we can just iterate through all of them in lockstep. 
+  *  For example, the first trajectory in the sequence is padded out at the end 
+  *  with its final value, causing it to stay in its final position as the other 
+  *  trajectories are rendered.
+  */
+  const lengths = rayTrajectories.map(rayTrajectory => rayTrajectory.length);
+  for (let i = 0; i < rayTrajectories.length; i++) {
+    rayTrajectories[i] = padTrajectory(rayTrajectories[i], i, lengths);
+  }
+  console.log(rayTrajectories[0][0]);
+
   // Set up the THREE.js scene.
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
@@ -104,29 +64,14 @@ function process(cameraTrajectory, rayTrajectories) {
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
 
-  let fullyTracedTrajectory;
-  if (MOVIENUMBER == 4) {
-    fullyTracedTrajectory = rayTrajectories[0]; // The first ray is the fully traced trajectory
-    rayTrajectories = rayTrajectories.slice(1, rayTrajectories.length); // The rest are the segment + projection of segment
-  }
-
   // Add all of the scene elements.
   addBlackHole(scene);
   addSpinAxis(scene);
   addSkyDome(scene, textureLoader);
   const rayMeshes = addRays(scene, rayTrajectories.length);
-  let trails 
-  if (MOVIENUMBER == 4) {
-    trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
-  } else {
-    trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
-  }
-  if (MOVIENUMBER == 2) { addRadialAxis(scene); }
-  // if (MOVIENUMBER == 4) { addConcentricCircles(scene); }
-  if (MOVIENUMBER == 4) { addFullyTracedRay(scene, fullyTracedTrajectory); }
 
-  let redRingMaterial; // need a reference to the red ring material to make it pulse later
-  if (MOVIENUMBER == 4) { redRingMaterial = addRedRing(scene); }
+  let trails;
+  trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
 
   const capturer = new CCapture({
     format: 'webm',
@@ -135,161 +80,23 @@ function process(cameraTrajectory, rayTrajectories) {
   if (CAPTUREON == 1) { capturer.start(); }
 
   let i = 0; // This index is used for movies 1 - 3
-
-  let currTrajectoryIdx = 0; // These indices are used for movie 4
-  let currTrajectoryCoordIdx = 0; // These indices are used for movie 4
-  let cameraIdx = 0; // These indices are used for movie 4
-  let colorIdx = 1; // These indices are used for movie 4
-
-  let startTime, startPhi;
-  if (MOVIENUMBER == 4) {
-    startTime = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][3]);
-    startPhi  = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][4]);
-  }
-
   let animationId;
   camera.up.set(0, 0, 1);
 
-  // UI references
-  const deltaPhiReadout  = document.getElementById('deltaPhiReadout');
-  const deltaTReadout    = document.getElementById('deltaTReadout');
-  const deltaReadoutItem = document.getElementById('delta-readout-item');
-  const deltaReadoutValue= document.getElementById('delta-readout-value');
-  const tauReadoutItem   = document.getElementById('tau-readout-item');
-  const tauReadoutValue  = document.getElementById('tau-readout-value');
-  const rightReadoutPanel= document.getElementById('right-readout-panel');
-
-  const pulseAngularVelocity = 10.0;
-  const pulsePhase = 0.25 * pulseAngularVelocity; // Shift in seconds
-  let redRingIsPulsing = false;
-  let startPulseTime;
-  const endPulseTime = 2.0; // Seconds
-  const numPulses = 3.0;
-
-  // Function that runs every frame.
   function animate() {
 	  animationId = requestAnimationFrame( animate );
 
-    /*
-    * For each light ray, update the position of the photon. Also update the corresponding 
-    * ray trail. The logic is slightly different for movie 4.
-    */
-    if (MOVIENUMBER == 4) {
-      camera.position.set(cameraTrajectory[cameraIdx][0],cameraTrajectory[cameraIdx][1],cameraTrajectory[cameraIdx][2]); 
-      camera.lookAt(cameraCenter);
+    camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); 
+    camera.lookAt(cameraCenter);
 
-      let currProjectedTrajectoryIdx = currTrajectoryIdx + 1;
+    for (let j = 0; j < rayMeshes.length; j++){
+      // Update the photon position.
+      rayMeshes[j].position.set(rayTrajectories[j][i][0], rayTrajectories[j][i][1], rayTrajectories[j][i][2]);
 
-      // Update the actual trajectory and its trail
-      rayMeshes[currTrajectoryIdx].position.set(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][0], 
-                                                rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][1], 
-                                                rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][2]);
-      updateTrail(rayMeshes[currTrajectoryIdx], trails[currTrajectoryIdx]);
-
-      // Update the projected trajectory and its trail
-      rayMeshes[currProjectedTrajectoryIdx].position.set( rayTrajectories[currProjectedTrajectoryIdx][currTrajectoryCoordIdx][0], 
-                                                          rayTrajectories[currProjectedTrajectoryIdx][currTrajectoryCoordIdx][1], 
-                                                          rayTrajectories[currProjectedTrajectoryIdx][currTrajectoryCoordIdx][2]);
-      updateTrail(rayMeshes[currProjectedTrajectoryIdx], trails[currProjectedTrajectoryIdx]);
-
-      // Update the UI
-      let currentTime         = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][3]);
-      let currentPhiInRadians = Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][4]);
-
-      let deltaT              = Math.abs(currentTime - startTime);
-      let deltaPhiInRadians   = Math.abs(currentPhiInRadians - startPhi);
-      let deltaPhiInDegs      = radiansToDegrees(deltaPhiInRadians);
-
-      deltaPhiReadout.innerText = formatNumber(deltaPhiInDegs) + '°';
-      deltaTReadout.innerText   = formatNumber(deltaT) + 'M';
-
-      const currPulseTime = performance.now() * 0.001; // Convert to seconds
-
-      // Pulse red ring logic 
-      if (redRingIsPulsing) {
-        const pulseTime = currPulseTime - startPulseTime;
-        const period = (2.0 * Math.PI) / pulseAngularVelocity;
-        const numCycles = pulseTime / period;
-
-        if (numCycles < numPulses) {
-          redRingMaterial.opacity = (Math.sin(pulseAngularVelocity * pulseTime + pulsePhase) + 1.0) / 2.0;
-        } else {
-          redRingMaterial.opacity = 1.0;
-          redRingIsPulsing = false;
-        }
-      }
-
-      // If the current position is an equatorial crossing, reset various counters
-      if (Number(rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx][5]) === 1) {
-        deltaReadoutValue.innerText = formatNumber(deltaPhiInDegs) + '°';
-        // We hard code here since NDSolve isn't sufficiently precise for constant tau
-        tauReadoutValue.innerText   = formatNumber(16.85) + 'M';
-
-        deltaReadoutValue.classList.remove('transparent');
-        tauReadoutValue.classList.remove('transparent');
-
-        /* Pulse the text */
-        deltaReadoutValue.classList.add('pulse-text');
-        tauReadoutValue.classList.add('pulse-text');
-
-        function onDeltaPulseAnimationEnd() {
-          deltaReadoutValue.classList.remove('pulse-text');
-        }
-
-        function onTauPulseAnimationEnd() {
-          tauReadoutValue.classList.remove('pulse-text');
-        }
-
-        deltaReadoutValue.removeEventListener('animationend', onDeltaPulseAnimationEnd)
-        deltaReadoutValue.addEventListener('animationend', onDeltaPulseAnimationEnd)
-
-        tauReadoutValue.removeEventListener('animationend', onTauPulseAnimationEnd)
-        tauReadoutValue.addEventListener('animationend', onTauPulseAnimationEnd)
-        /* Pulse the text */
-
-        startTime = currentTime;
-        startPhi = currentPhiInRadians;
-
-        // Reset the trail of the projection
-        resetTrail(rayMeshes[currProjectedTrajectoryIdx], trails[currProjectedTrajectoryIdx]);
-        trails[currProjectedTrajectoryIdx].material.color.set(colors[colorIdx]);
-
-        // Create a new trail for the next segment and replace the old one so that it no longer 
-        // receives animation updates.
-        let returnedTrail = addTrail(scene, rayTrajectories[currTrajectoryIdx][currTrajectoryCoordIdx], colors[colorIdx]);
-        trails[currTrajectoryIdx] = returnedTrail;
-
-        colorIdx++;
-
-        // Pulse red ring logic 
-        redRingIsPulsing = true;
-        startPulseTime = currPulseTime;
-      }
-
-      /* 
-      * For movie 4, we animate the trajectories two at a time (the trajectory and its equatorial projection), 
-      * with pairs proceeding in sequence.
-      */
-      currTrajectoryCoordIdx += 1;
-      if (currTrajectoryCoordIdx == rayTrajectories[currTrajectoryIdx].length) {
-        currTrajectoryIdx = (currTrajectoryIdx + 1) % rayTrajectories.length; 
-        currTrajectoryCoordIdx = 0;
-      }
-
-      cameraIdx += 1;
-    } else {
-      camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); 
-      camera.lookAt(cameraCenter);
-
-      for (let j = 0; j < rayMeshes.length; j++){
-        // Update the photon position.
-        rayMeshes[j].position.set(rayTrajectories[j][i][0], rayTrajectories[j][i][1], rayTrajectories[j][i][2]);
-
-        // Now update the trail.
-        updateTrail(rayMeshes[j], trails[j]);
-      }
-	    i = i + 1;
+      // Now update the trail.
+      updateTrail(rayMeshes[j], trails[j]);
     }
+    i = i + 1;
 	  renderer.render( scene, camera );
 
     if (CAPTUREON == 1) { 
@@ -400,20 +207,7 @@ function addTrails(scene, numRays, initialPositions) {
     trailGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
     let trailMaterial; 
-    if (MOVIENUMBER == 4) {
-      if (i % 2 == 0) {
-        trailMaterial = new THREE.LineBasicMaterial({ color: colors[0], linewidth: 3 });
-      } else {
-        trailMaterial = new THREE.LineDashedMaterial({
-          color: colors[0],
-          dashSize: 0.5,
-          gapSize: 2,
-          linewidth: 2
-        });
-      }
-    } else {
-      trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
-    }
+    trailMaterial = new THREE.LineBasicMaterial({ color: colors[i], linewidth: 3 });
 
     const trail = new THREE.Line(trailGeometry, trailMaterial);
     trail.computeLineDistances();
@@ -608,4 +402,27 @@ function formatNumber(num, precision = 2) {
   let [intPart, decPart] = num.toFixed(precision).split('.');
   intPart = intPart.padStart(3, ' '); // Adjust based on maximum expected length
   return `${intPart}.${decPart}`;
+}
+
+function padTrajectory(rayTrajectory, trajectoryIndex, lengths) {
+  let numPadElementsBefore = 0;
+  for (let i = 0; i < trajectoryIndex; ++i) {
+    numPadElementsBefore = numPadElementsBefore + lengths[i];
+  }
+
+  let numPadElementsAfter = 0;
+  for (let i = trajectoryIndex + 1; i < lengths.length; ++i) {
+    numPadElementsAfter = numPadElementsAfter + lengths[i];
+  }
+
+  let startPosition = rayTrajectory[0];
+  let endPosition = rayTrajectory[rayTrajectory.length - 1];
+  console.log(startPosition)
+  console.log(endPosition)
+
+
+  const paddingBefore = Array(numPadElementsBefore).fill(startPosition);
+  const paddingAfter = Array(numPadElementsAfter).fill(endPosition);
+
+  return paddingBefore.concat(rayTrajectory).concat(paddingAfter);
 }
