@@ -49,11 +49,24 @@ function process(cameraTrajectory, rayTrajectories) {
   *  with its final value, causing it to stay in its final position as the other 
   *  trajectories are rendered.
   */
+
+  // The indices at which equatorial crossings occur
+  const equatorialCrossingIndices = getEquatorialCrossingIndices(rayTrajectories);
+
   const lengths = rayTrajectories.map(rayTrajectory => rayTrajectory.length);
   for (let i = 0; i < rayTrajectories.length; i++) {
     rayTrajectories[i] = padTrajectory(rayTrajectories[i], i, lengths);
   }
   console.log(rayTrajectories[0][0]);
+
+  // Pad the end of all the trajectories so that we have time to pulse the last equatorial crossing
+  rayTrajectories.forEach(trajectory => {
+    const lastElement = trajectory[trajectory.length - 1];
+    const N = 500;
+    for (let i = 0; i < N; ++i) {
+      trajectory.push(lastElement);
+    }
+  });
 
   // Set up the THREE.js scene.
   const scene = new THREE.Scene();
@@ -68,6 +81,9 @@ function process(cameraTrajectory, rayTrajectories) {
   addBlackHole(scene);
   addSpinAxis(scene);
   addSkyDome(scene, textureLoader);
+
+  let materials = addEquatorialRings(scene);
+
   const rayMeshes = addRays(scene, rayTrajectories.length);
 
   let trails;
@@ -79,24 +95,58 @@ function process(cameraTrajectory, rayTrajectories) {
   });
   if (CAPTUREON == 1) { capturer.start(); }
 
-  let i = 0; // This index is used for movies 1 - 3
+  let i = 0;
   let animationId;
   camera.up.set(0, 0, 1);
 
+  let isPulsing = false;
+  let idxOfPulsingRing;
+  let startPulseTime;
+
+  const pulseAngularVelocity = 10.0;
+  const pulsePhase = 0.25 * pulseAngularVelocity; // Shift in seconds
+  const numPulses = 3.0;
+
+  console.log(equatorialCrossingIndices);
+
   function animate() {
-	  animationId = requestAnimationFrame( animate );
+    animationId = requestAnimationFrame( animate );
+    let currPulseTime = performance.now() * 0.001; // convert  to seconds
 
-    camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); 
-    camera.lookAt(cameraCenter);
+    let equatorialCrossingIndex = equatorialCrossingIndices.indexOf(i);
+    console.log(i);
+    if (equatorialCrossingIndex !== -1) { // If this iteration is a crossing
+      idxOfPulsingRing = equatorialCrossingIndex;
+      isPulsing = true;
+      startPulseTime = currPulseTime;
+      i = i + 1;
+    } 
 
-    for (let j = 0; j < rayMeshes.length; j++){
-      // Update the photon position.
-      rayMeshes[j].position.set(rayTrajectories[j][i][0], rayTrajectories[j][i][1], rayTrajectories[j][i][2]);
+    if (isPulsing) {
+      const pulseTime = currPulseTime - startPulseTime;
+      const period = (2.0 * Math.PI) / pulseAngularVelocity;
+      const numCycles = pulseTime / period;
 
-      // Now update the trail.
-      updateTrail(rayMeshes[j], trails[j]);
+      if (numCycles < numPulses) {
+        materials[idxOfPulsingRing].opacity = (Math.sin(pulseAngularVelocity * pulseTime + pulsePhase) + 1.0) / 2.0;
+      } else {
+        materials[idxOfPulsingRing].opacity = 1.0;
+        isPulsing = false;
+      }
+    } else {
+      camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); 
+      camera.lookAt(cameraCenter);
+
+      for (let j = 0; j < rayMeshes.length; j++){
+        // Update the photon position.
+        rayMeshes[j].position.set(rayTrajectories[j][i][0], rayTrajectories[j][i][1], rayTrajectories[j][i][2]);
+
+        // Now update the trail.
+        updateTrail(rayMeshes[j], trails[j]);
+      }
+      i = i + 1;
     }
-    i = i + 1;
+
 	  renderer.render( scene, camera );
 
     if (CAPTUREON == 1) { 
@@ -404,6 +454,17 @@ function formatNumber(num, precision = 2) {
   return `${intPart}.${decPart}`;
 }
 
+function getEquatorialCrossingIndices(rayTrajectories) {
+  let equatorialCrossingIndices = [];
+  equatorialCrossingIndices.push(rayTrajectories[0].length);
+
+  for (let i = 1; i < rayTrajectories.length; ++i) {
+    equatorialCrossingIndices.push(equatorialCrossingIndices[i - 1] + rayTrajectories[i].length);
+  }
+
+  return equatorialCrossingIndices;
+}
+
 function padTrajectory(rayTrajectory, trajectoryIndex, lengths) {
   let numPadElementsBefore = 0;
   for (let i = 0; i < trajectoryIndex; ++i) {
@@ -425,4 +486,35 @@ function padTrajectory(rayTrajectory, trajectoryIndex, lengths) {
   const paddingAfter = Array(numPadElementsAfter).fill(endPosition);
 
   return paddingBefore.concat(rayTrajectory).concat(paddingAfter);
+}
+
+function addEquatorialRings(scene) {
+  const rcrits = [28.0, 32.0, 36.0];
+  let materials = [];
+
+  for (let i = 0; i < rcrits.length; ++i) {
+    const radius = rcrits[i];
+    const curve = new THREE.EllipseCurve(
+      0,  0,            // ax, aY
+      radius, radius,   // xRadius, yRadius
+      0,  2 * Math.PI,  // aStartAngle, aEndAngle
+      false,            // aClockwise
+      0                 // aRotation
+    );
+
+    const points = curve.getPoints(1000);
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ 
+      color: colors[i],
+      linewidth: 3.0,
+      transparent: true,
+      opacity: 1.0,
+    });
+    const line = new THREE.Line(geometry, material);
+
+    scene.add(line);
+    materials.push(material);
+  }
+
+  return materials; 
 }
