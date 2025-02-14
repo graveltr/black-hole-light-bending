@@ -95,6 +95,14 @@ function process(cameraTrajectory, rayTrajectories) {
   });
   if (CAPTUREON == 1) { capturer.start(); }
 
+  // UI References
+  const tauOneReadout  = document.getElementById('tauOneReadout');
+  const tauTwoReadout  = document.getElementById('tauTwoReadout');
+  const tauThreeReadout  = document.getElementById('tauThreeReadout');
+  const tauReadouts = [tauOneReadout, tauTwoReadout, tauThreeReadout];
+
+  const rayLaunchTime = Number(rayTrajectories[0][0][3]);
+
   let i = 0;
   let animationId;
   camera.up.set(0, 0, 1);
@@ -109,6 +117,8 @@ function process(cameraTrajectory, rayTrajectories) {
 
   console.log(equatorialCrossingIndices);
 
+  let activeRay = 0;
+
   function animate() {
     animationId = requestAnimationFrame( animate );
     let currPulseTime = performance.now() * 0.001; // convert  to seconds
@@ -120,6 +130,7 @@ function process(cameraTrajectory, rayTrajectories) {
       isPulsing = true;
       startPulseTime = currPulseTime;
       i = i + 1;
+      tauReadouts[activeRay].classList.add('pulse-text');
     } 
 
     if (isPulsing) {
@@ -132,8 +143,13 @@ function process(cameraTrajectory, rayTrajectories) {
       } else {
         materials[idxOfPulsingRing].opacity = 1.0;
         isPulsing = false;
+        activeRay = (activeRay + 1) % 3;
       }
     } else {
+      const currentRayTime = rayTrajectories[activeRay][i][3];
+      const elapsedRayTime = Math.abs(currentRayTime - rayLaunchTime); 
+      tauReadouts[activeRay].innerText = formatNumber(elapsedRayTime) + 'M';
+
       camera.position.set(cameraTrajectory[i][0],cameraTrajectory[i][1],cameraTrajectory[i][2]); 
       camera.lookAt(cameraCenter);
 
