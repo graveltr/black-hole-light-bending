@@ -78,8 +78,6 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
   addSpinAxis(scene);
   addSkyDome(scene, textureLoader);
 
-
-
   const capturer = new CCapture({
     format: 'webm',
     framerate: 60
@@ -87,23 +85,24 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
   if (CAPTUREON == 1) { capturer.start(); }
 
   // UI References
-
   let animationId;
   camera.up.set(0, 0, 1);
 
   let currGlobalFrame = 0;
   let currClip = 0;
   let currClipFrame = 0;
-  let numFramesPerClip = [50, 50];
+  let numFramesPerClip = [50, -1, 50];
 
   let rayMeshes = [];
   let trails = [];
 
+  camera.position.set(cameraTrajectory[0][0],cameraTrajectory[0][1],cameraTrajectory[0][2]); 
+  camera.lookAt(cameraCenter);
+
   function animate() {
     animationId = requestAnimationFrame( animate );
 
-    camera.position.set(cameraTrajectory[currGlobalFrame][0],cameraTrajectory[currGlobalFrame][1],cameraTrajectory[currGlobalFrame][2]); 
-    camera.lookAt(cameraCenter);
+    console.log(currClipFrame);
 
     // Initialize clips on frame one
     if (currClipFrame === 0) {
@@ -117,6 +116,8 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
         rayMeshes.forEach((element) => {
           scene.remove(element);
         })
+      } else if (currClip === 2) {
+
       } else {
         console.log("Clip counter is out of bounds");
       }
@@ -128,8 +129,21 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
         rayMeshes[j].position.set(rayTrajectories[j][currClipFrame][0], rayTrajectories[j][currClipFrame][1], rayTrajectories[j][currClipFrame][2]);
         updateTrail(rayMeshes[j], trails[j]);
       }
+      camera.position.set(cameraTrajectory[currClipFrame][0],cameraTrajectory[currClipFrame][1],cameraTrajectory[currClipFrame][2]); 
+      camera.lookAt(cameraCenter);
     } else if (currClip === 1) {
+      camera.position.set(camera.position.x, camera.position.y, camera.position.z - 0.25);
+      camera.lookAt(cameraCenter);
 
+      if (approximatelyEqual(camera.position.z, 0.0, 0.26)) {
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      }
+    } else if (currClip === 2) {
+      if (currClipFrame !== 0) {
+        scene.remove(photonShellKeyframes[currClipFrame - 1]);
+      }
+      scene.add(photonShellKeyframes[currClipFrame]);
     } else {
       console.log("Clip counter is out of bounds");
     }
@@ -553,4 +567,8 @@ function loadPhotonShellKeyframes() {
   };
 
   return loadAllKeyframes();
+}
+
+function approximatelyEqual(a, b, epsilon) {
+    return Math.abs(a - b) <= epsilon;
 }
