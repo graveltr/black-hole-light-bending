@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Reddit+Mono:wght@200..900&display=swap" rel="stylesheet">
+
+		<meta charset="utf-8">
+		<title>My first three.js app</title>
+		<style>
+			body {
+				margin: 0;
+				overflow: hidden;
+				font-family: "Noto Mono", monospace;
+			}
+			.readout-panel {
+				display: flex;
+				flex-direction: column;
+				position: absolute;
+				background: rgba(0, 0, 0, 0.7);
+				color: #ffffff;
+				padding: 20px;
+				border-radius: 10px;
+				font-family: "Noto Mono", monospace;
+				font-weight: bold;
+				white-space: pre; 
+				font-size: 60px;
+			}
+			#left-readout-panel {
+				top: 60px;
+				left: 60px;
+			}
+			#right-readout-panel {
+				top: 60px;
+				right: 60px;
+			}
+			.readout-panel .readout-item {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				height: 80px;
+			}
+			.readout-item .label {
+				margin-right: 10px;
+			}
+			.readout-item .value {
+				text-align: right;
+				display: inline-block;
+				min-width: 40px; 
+				font-family: "Noto Mono", monospace;
+				font-weight: bold;
+				font-size: 60px;
+				position: relative;
+			}
+			@keyframes pulse {
+				0% {
+					opacity: 1.0;
+				}
+				50% {
+					opacity: 0.0; /* Reach full opacity at the mid-point of the animation */
+				}
+				100% {
+					opacity: 1.0;
+				}
+			}
+			.pulse-text {
+				animation-name: pulse;
+				animation-duration: 0.628s;
+				animation-iteration-count: 3; /* Pulse only once */
+				animation-timing-function: ease-in-out;
+			}
+			.transparent {
+				opacity: 0.0;
+			}
+		</style>
+	</head>
+	<body>
+    </div>
+		<script src="ccapture.js/src/CCapture.js"></script>
+		<script src="ccapture.js/src/download.js"></script>
+		<script src="ccapture.js/src/webm-writer-0.2.0.js"></script>
+		<script type="module" src="/deforming-mesh-testing.js"></script>
+		<!--  <script type="module" src="/embeddingDiagram.js"></script> -->
+	</body>
+</html>
