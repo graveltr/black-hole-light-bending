@@ -37,20 +37,31 @@ Promise.all(fetchPromises)
   .then(csvTexts => {
     // csvTexts is an array containing the contents of each CSV file as text.
     const trajectories = csvTexts.map(csvText => parseCSV(csvText));
-    loadPhotonShell(trajectories[0], trajectories.slice(1));
+    loadSpinValues(trajectories[0], trajectories.slice(1));
   })
   .catch(error => {
     console.error('Error fetching one or more CSV files:', error);
   });
 
-function loadPhotonShell(cameraTrajectory, rayTrajectories) {
+function loadSpinValues(cameraTrajectory, rayTrajectories) {
+  console.log("loading spin values");
+  const spinValuesCsvUrl = "models/photonShellAnimation/spinValues.csv";
+  fetch(spinValuesCsvUrl).then(response => response.text()).then(csvText => {
+    console.log("spin values:");
+    const spinValues = parseCSV(csvText);
+    console.log(spinValues);
+    loadPhotonShell(cameraTrajectory, rayTrajectories, spinValues);
+  })
+}
+
+function loadPhotonShell(cameraTrajectory, rayTrajectories, spinValues) {
   // Load the keyframes for animating the photon shell.
   // Each keyframe is an object showing the cross-section of the photon shell 
   // at a given spin. Keyframes is an array containing these cross-sections
   // in increasing spin value as one increase the array index.
   loadPhotonShellKeyframes().then(keyframes => {
     console.log("All keyframes loaded", keyframes);
-    process(cameraTrajectory, rayTrajectories, keyframes);
+    process(cameraTrajectory, rayTrajectories, keyframes, spinValues);
   }).catch(error => {
     console.error("An error occurred while loading keyframes:", error);
   });
@@ -61,7 +72,7 @@ function loadPhotonShell(cameraTrajectory, rayTrajectories) {
 * above complete. It is passed a camera trajectory and an array of light ray 
 * trajectories, which themselves are arrays of vectors (x,y,z coordinates).
 */
-function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
+function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinValues) {
   console.log("hello world");
 
   // Set up the THREE.js scene.
@@ -74,7 +85,7 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
   document.body.appendChild( renderer.domElement );
 
   // Add all of the scene elements.
-  addBlackHole(scene);
+  let blackHole = addBlackHole(scene, 20.0);
   addSpinAxis(scene);
   addSkyDome(scene, textureLoader);
 
@@ -85,19 +96,23 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
   if (CAPTUREON == 1) { capturer.start(); }
 
   // UI References
+  const spinReadout  = document.getElementById('spinReadout');
+
   let animationId;
   camera.up.set(0, 0, 1);
 
   let currGlobalFrame = 0;
   let currClip = 0;
   let currClipFrame = 0;
-  let numFramesPerClip = [50, -1, 50];
+  let numFramesPerClip = [400, -1, 230, -1, -1];
 
   let rayMeshes = [];
   let trails = [];
 
   camera.position.set(cameraTrajectory[0][0],cameraTrajectory[0][1],cameraTrajectory[0][2]); 
   camera.lookAt(cameraCenter);
+
+  let clipFrameOfHalfSpin;
 
   function animate() {
     animationId = requestAnimationFrame( animate );
@@ -107,9 +122,11 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
     // Initialize clips on frame one
     if (currClipFrame === 0) {
       if (currClip === 0) {
+        console.log("starting clip 0")
         rayMeshes = addRays(scene, rayTrajectories.length);
         trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
       } else if (currClip === 1) {
+        console.log("starting clip 1")
         trails.forEach((element) => {
           scene.remove(element);
         })
@@ -117,6 +134,11 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
           scene.remove(element);
         })
       } else if (currClip === 2) {
+          console.log("starting clip 2")
+          rotatePhotonShellKeyframes(camera.position, photonShellKeyframes);
+      } else if (currClip === 3) { 
+
+      } else if (currClip === 4) {
 
       } else {
         console.log("Clip counter is out of bounds");
@@ -131,6 +153,12 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
       }
       camera.position.set(cameraTrajectory[currClipFrame][0],cameraTrajectory[currClipFrame][1],cameraTrajectory[currClipFrame][2]); 
       camera.lookAt(cameraCenter);
+
+      currClipFrame = currClipFrame + 1;
+      if (currClipFrame === numFramesPerClip[currClip]) {
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      }
     } else if (currClip === 1) {
       camera.position.set(camera.position.x, camera.position.y, camera.position.z - 0.25);
       camera.lookAt(cameraCenter);
@@ -138,23 +166,57 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes) {
       if (approximatelyEqual(camera.position.z, 0.0, 0.26)) {
         currClip = (currClip + 1) % numFramesPerClip.length;
         currClipFrame = 0;
+      } else {
+        currClipFrame = currClipFrame + 1;
       }
     } else if (currClip === 2) {
       if (currClipFrame !== 0) {
         scene.remove(photonShellKeyframes[currClipFrame - 1]);
       }
-      scene.add(photonShellKeyframes[currClipFrame]);
+
+      let currSpinValue = Math.abs(spinValues[currClipFrame]);
+
+      if (0.5 < currSpinValue) {
+        clipFrameOfHalfSpin = currClipFrame;
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      } else {
+        scene.add(photonShellKeyframes[currClipFrame]);
+
+        scene.remove(blackHole);
+        blackHole = addBlackHole(scene, computeOuterHorizon(currSpinValue));
+
+        spinReadout.innerText = formatNumber(currSpinValue);
+
+        currClipFrame = currClipFrame + 1;
+      }
+    } else if (currClip === 3) { 
+      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z + 0.25);
+
+      camera.position.set(camera.position.x, camera.position.y, camera.position.z + 0.25);
+      camera.lookAt(cameraCenter);
+
+      if (Math.PI / 3.0 > sphericalCoords.theta) {
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      } else {
+        currClipFrame = currClipFrame + 1;
+      }
+    } else if (currClip === 4) {
+      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
+      let newPhi = sphericalCoords.phi + Math.PI / 600.0;
+
+      let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
+
+      camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
+      camera.lookAt(cameraCenter);
+
+      currClipFrame = currClipFrame + 1;
     } else {
       console.log("Clip counter is out of bounds");
     }
 
 	  renderer.render( scene, camera );
-
-    currClipFrame = currClipFrame + 1;
-    if (currClipFrame === numFramesPerClip[currClip]) {
-      currClip = (currClip + 1) % numFramesPerClip.length;
-      currClipFrame = 0;
-    }
 
     currGlobalFrame = currGlobalFrame + 1;
 
@@ -407,13 +469,15 @@ function addFullyTracedRay(scene, fullyTracedTrajectory) {
   scene.add(line);
 }
 
-function addBlackHole(scene) {
+function addBlackHole(scene, radius) {
   const blackholeMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(20, 64, 64), 
+    new THREE.SphereGeometry(radius, 64, 64), 
     new THREE.MeshBasicMaterial({ color: 0x000000 })
   );
 
   scene.add(blackholeMesh);
+
+  return blackholeMesh;
 }
 
 function addRadialAxis(scene) {
@@ -450,6 +514,14 @@ function cartesianToSpherical(x, y, z) {
   const phi = Math.atan2(y, x);  // atan2 handles the quadrant correctly
 
   return { r, theta, phi };
+}
+
+function sphericalToCartesian(r, theta, phi) {
+    let x = r * Math.sin(theta) * Math.cos(phi);
+    let y = r * Math.sin(theta) * Math.sin(phi);
+    let z = r * Math.cos(theta);
+
+    return { x, y, z };
 }
 
 function radiansToDegrees(theta) {
@@ -528,13 +600,22 @@ function addEquatorialRings(scene) {
   return materials; 
 }
 
+function rotatePhotonShellKeyframes(cameraPosition, keyframes) {
+  const phi = Math.atan2(cameraPosition.y, cameraPosition.x) + (Math.PI / 2.0)
+  console.log("rotation: " + String(phi));
+
+  keyframes.forEach((element) => {
+    element.rotation.z = phi;
+  });
+}
+
 /*
 *  Returns a promise that resolves with the keyframes array once all keyframes
 *  are loaded.
 */
 function loadPhotonShellKeyframes() {
   const objLoader = new OBJLoader();
-  const lastFrame = 80;
+  const lastFrame = 230;
   const keyframes = [];
   const basePath = "models/photonShellAnimation/";
   
@@ -571,4 +652,8 @@ function loadPhotonShellKeyframes() {
 
 function approximatelyEqual(a, b, epsilon) {
     return Math.abs(a - b) <= epsilon;
+}
+
+function computeOuterHorizon(a) {
+  return 10.0 * (1 + Math.sqrt(1 - a * a));
 }
