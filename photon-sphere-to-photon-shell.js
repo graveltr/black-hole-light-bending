@@ -61,7 +61,16 @@ function loadPhotonShell(cameraTrajectory, rayTrajectories, spinValues) {
   // in increasing spin value as one increase the array index.
   loadPhotonShellKeyframes().then(keyframes => {
     console.log("All keyframes loaded", keyframes);
-    process(cameraTrajectory, rayTrajectories, keyframes, spinValues);
+    loadPhotonShellSpin50(cameraTrajectory, rayTrajectories, keyframes, spinValues);
+  }).catch(error => {
+    console.error("An error occurred while loading keyframes:", error);
+  });
+}
+
+function loadPhotonShellSpin50(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinValues) {
+  loadPhotonShellCrossSectionsSpin50().then(photonShellCrossSectionsSpin50 => {
+    console.log("All photon shell cross sections at spin 50 loaded");
+    process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinValues, photonShellCrossSectionsSpin50);
   }).catch(error => {
     console.error("An error occurred while loading keyframes:", error);
   });
@@ -72,7 +81,7 @@ function loadPhotonShell(cameraTrajectory, rayTrajectories, spinValues) {
 * above complete. It is passed a camera trajectory and an array of light ray 
 * trajectories, which themselves are arrays of vectors (x,y,z coordinates).
 */
-function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinValues) {
+function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinValues, photonShellCrossSectionsSpin50) {
   console.log("hello world");
 
   // Set up the THREE.js scene.
@@ -104,7 +113,7 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
   let currGlobalFrame = 0;
   let currClip = 0;
   let currClipFrame = 0;
-  let numFramesPerClip = [400, -1, 230, -1, -1];
+  let numFramesPerClip = [400, -1, 230, -1, 300, 300, 300];
 
   let rayMeshes = [];
   let trails = [];
@@ -113,6 +122,13 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
   camera.lookAt(cameraCenter);
 
   let clipFrameOfHalfSpin;
+
+
+  const pulseAngularVelocity = 10.0;
+  const pulsePhase = 0.25 * pulseAngularVelocity; // Shift in seconds
+  const numPulses = 3.0;
+  
+  let clipStartTime;
 
   function animate() {
     animationId = requestAnimationFrame( animate );
@@ -137,9 +153,17 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
           console.log("starting clip 2")
           rotatePhotonShellKeyframes(camera.position, photonShellKeyframes);
       } else if (currClip === 3) { 
-
       } else if (currClip === 4) {
-
+        clipStartTime = performance.now() * 0.001;
+        scene.add(photonShellCrossSectionsSpin50[0]);
+      } else if (currClip === 5) {
+        clipStartTime = performance.now() * 0.001;
+        scene.remove(photonShellCrossSectionsSpin50[0]);
+        scene.add(photonShellCrossSectionsSpin50[1]);
+      } else if (currClip === 6) {
+        clipStartTime = performance.now() * 0.001;
+        scene.remove(photonShellCrossSectionsSpin50[1]);
+        scene.add(photonShellCrossSectionsSpin50[2]);
       } else {
         console.log("Clip counter is out of bounds");
       }
@@ -202,7 +226,9 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
       } else {
         currClipFrame = currClipFrame + 1;
       }
-    } else if (currClip === 4) {
+    } else if (currClip === 4 || currClip === 5 || currClip === 6) {
+      let currClipTime = performance.now() * 0.001; // convert  to seconds
+
       let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
       let newPhi = sphericalCoords.phi + Math.PI / 600.0;
 
@@ -211,7 +237,22 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
       camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
       camera.lookAt(cameraCenter);
 
+      const elapsedClipTime = currClipTime - clipStartTime;
+      const period = (2.0 * Math.PI) / pulseAngularVelocity;
+      const numCycles = elapsedClipTime / period;
+
+      if (numCycles < numPulses) {
+        let currOpacity = (Math.sin(pulseAngularVelocity * elapsedClipTime + pulsePhase) + 1.0) / 2.0;
+        setCrossSectionOpacity(photonShellCrossSectionsSpin50[currClip - 4], currOpacity)
+      } else {
+        setCrossSectionOpacity(photonShellCrossSectionsSpin50[currClip - 4], 1.0)
+      }
+
       currClipFrame = currClipFrame + 1;
+      if (currClipFrame === numFramesPerClip[currClip]) {
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      }
     } else {
       console.log("Clip counter is out of bounds");
     }
@@ -650,10 +691,61 @@ function loadPhotonShellKeyframes() {
   return loadAllKeyframes();
 }
 
+function loadPhotonShellCrossSectionsSpin50() {
+  const objLoader = new OBJLoader();
+  const photonShellCrossSectionsSpin50 = [];
+  
+  const loadCrossSection = (path) => {
+    return new Promise((resolve, reject) => {
+      objLoader.load(
+        path,
+        object => resolve(object),
+        undefined,
+        error => reject(error)
+      );
+    });
+  };
+
+  const loadAllPhotonShellCrossSections = async () => {
+    const paths = [
+      "models/photonShellCrossSectionSpin50Radius24.obj",
+      "models/photonShellCrossSectionSpin50Radius27.obj",
+      "models/photonShellCrossSectionSpin50Radius31.obj"
+    ];
+
+    console.log(paths);
+
+    for (let i = 0; i <= paths.length; i++) {
+      try {
+        const object = await loadCrossSection(paths[i]);
+        console.log("successfully loaded " + paths[i]);
+        photonShellCrossSectionsSpin50.push(object);
+      } catch (error) {
+        console.error("Error loading " + paths[i], error);
+      }
+    }
+
+    return photonShellCrossSectionsSpin50;
+  };
+
+  return loadAllPhotonShellCrossSections();
+} 
+
 function approximatelyEqual(a, b, epsilon) {
     return Math.abs(a - b) <= epsilon;
 }
 
 function computeOuterHorizon(a) {
   return 10.0 * (1 + Math.sqrt(1 - a * a));
+}
+
+function setCrossSectionOpacity(object, value) {
+  object.traverse(function (child) {
+      console.log(child.children);
+      console.log(child.children.length);
+      if (child.children.length > 0) {
+        child.children[0].material.transparent = true;
+        child.children[0].material.opacity = value;
+      }
+  });
 }
