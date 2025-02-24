@@ -104,7 +104,7 @@ a larger initial momentum, leading to more rapid escape.
 
 ![equatorial](gifs/krt-equatorial-rays.gif)
 
-embeddingDiagram.js: Kerr Ray Tracing Embedded Equatorial Rays:
+Kerr Ray Tracing Embedded Equatorial Rays:
 The same physical setup as Movie 3, but displayed in the embedding space.
 We see the embedding diagram of the equatorial plane along with the mapped ray
 trajectories. We see the photons orbit and then climb out of the throat.

@@ -16,7 +16,7 @@ const sceneOneCsvUrls = [];
 const sceneOneBasePath = "trajectories/photon-sphere-to-photon-shell/scene1/"
 sceneOneCsvUrls.push(sceneOneBasePath + "cameraTrajectory.csv");
 const numLaunchPoints = 10;
-const numLaunchAngles = 4;
+const numLaunchAngles = 2;
 for (let i = 0; i < numLaunchPoints; ++i) {
   for (let j = 0; j < numLaunchAngles; ++j) {
     sceneOneCsvUrls.push(sceneOneBasePath + "ray-" + String(i + 1) + "-" + String(j + 1) + ".csv");
@@ -25,12 +25,30 @@ for (let i = 0; i < numLaunchPoints; ++i) {
 console.log("hello world");
 console.log(sceneOneCsvUrls);
 
+const sceneTwoCsvUrls = [];
+const sceneTwoBasePath = "trajectories/photon-sphere-to-photon-shell/scene2/"
+const numAzimuths = 6;
+for (let j = 0; j < numAzimuths; ++j) {
+  sceneTwoCsvUrls.push(sceneTwoBasePath + "azimuth-" + String(j) + ".csv");
+}
+console.log("hello world");
+console.log(sceneTwoCsvUrls);
+
+let numSceneOneTrajectories = sceneOneCsvUrls.length - 1; // Minus 1 because of camera trajectory
+let numSceneTwoTrajectories = sceneTwoCsvUrls.length;
+
 // Map over the URLs and return an array of promises.
 // Both fetch and response.text return promises, thus 
 // fetchPromises results in an array of promises.
-const fetchPromises = sceneOneCsvUrls.map(url =>
+const sceneOnePromises = sceneOneCsvUrls.map(url =>
   fetch(url).then(response => response.text())
 );
+
+const sceneTwoPromises = sceneTwoCsvUrls.map(url =>
+  fetch(url).then(response => response.text())
+);
+
+const fetchPromises = sceneOnePromises.concat(sceneTwoPromises)
 
 // Use Promise.all to wait for all fetch requests to complete.
 Promise.all(fetchPromises)
@@ -84,6 +102,9 @@ function loadPhotonShellSpin50(cameraTrajectory, rayTrajectories, photonShellKey
 function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinValues, photonShellCrossSectionsSpin50) {
   console.log("hello world");
 
+  const sceneOneRayTrajectories = rayTrajectories.slice(0, numSceneOneTrajectories);
+  const sceneTwoRayTrajectories = rayTrajectories.slice(numSceneOneTrajectories, rayTrajectories.length);
+
   // Set up the THREE.js scene.
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
@@ -113,22 +134,25 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
   let currGlobalFrame = 0;
   let currClip = 0;
   let currClipFrame = 0;
-  let numFramesPerClip = [400, -1, 230, -1, 300, 300, 300];
+  let numFramesPerClip = [-1, 100, -1, 230, -1, 300, 100, 300, 100, 300, 100];
 
-  let rayMeshes = [];
-  let trails = [];
+  let sceneOneRayMeshes = [];
+  let sceneOneTrails = [];
 
   camera.position.set(cameraTrajectory[0][0],cameraTrajectory[0][1],cameraTrajectory[0][2]); 
   camera.lookAt(cameraCenter);
 
   let clipFrameOfHalfSpin;
 
-
   const pulseAngularVelocity = 10.0;
   const pulsePhase = 0.25 * pulseAngularVelocity; // Shift in seconds
   const numPulses = 3.0;
   
   let clipStartTime;
+
+  let photonSphereMesh;
+
+  let currPhotonSpherePhiLength = Math.PI;
 
   function animate() {
     animationId = requestAnimationFrame( animate );
@@ -139,31 +163,42 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
     if (currClipFrame === 0) {
       if (currClip === 0) {
         console.log("starting clip 0")
-        rayMeshes = addRays(scene, rayTrajectories.length);
-        trails = addTrails(scene, rayTrajectories.length, rayTrajectories.map(matrix => matrix[0]));
+        sceneOneRayMeshes = addRays(scene, sceneOneRayTrajectories.length);
+        sceneOneTrails = addTrails(scene, sceneOneRayTrajectories.length, sceneOneRayTrajectories.map(matrix => matrix[0]));
       } else if (currClip === 1) {
-        console.log("starting clip 1")
-        trails.forEach((element) => {
-          scene.remove(element);
-        })
-        rayMeshes.forEach((element) => {
-          scene.remove(element);
-        })
+        clipStartTime = performance.now() * 0.001;
+        photonSphereMesh = addPhotonSphereAzimuthal(scene, 30, 2.0 * Math.PI);
       } else if (currClip === 2) {
+        scene.remove(photonSphereMesh);
+        photonSphereMesh = addPhotonSphereAzimuthal(scene, 30, 2.0 * Math.PI);
+      } else if (currClip === 3) {
+        sceneOneTrails.forEach((element) => {
+          scene.remove(element);
+        })
+        sceneOneRayMeshes.forEach((element) => {
+          scene.remove(element);
+        })
+      } else if (currClip === 4) {
           console.log("starting clip 2")
           rotatePhotonShellKeyframes(camera.position, photonShellKeyframes);
-      } else if (currClip === 3) { 
-      } else if (currClip === 4) {
+      } else if (currClip === 5) { 
+      } else if (currClip === 6) {
         clipStartTime = performance.now() * 0.001;
         scene.add(photonShellCrossSectionsSpin50[0]);
-      } else if (currClip === 5) {
+      } else if (currClip === 7) {
+        clipStartTime = performance.now() * 0.001;
+      } else if (currClip === 8) {
         clipStartTime = performance.now() * 0.001;
         scene.remove(photonShellCrossSectionsSpin50[0]);
         scene.add(photonShellCrossSectionsSpin50[1]);
-      } else if (currClip === 6) {
+      } else if (currClip === 9) {
+        clipStartTime = performance.now() * 0.001;
+      } else if (currClip === 10) {
         clipStartTime = performance.now() * 0.001;
         scene.remove(photonShellCrossSectionsSpin50[1]);
         scene.add(photonShellCrossSectionsSpin50[2]);
+      } else if (currClip === 11) {
+        clipStartTime = performance.now() * 0.001;
       } else {
         console.log("Clip counter is out of bounds");
       }
@@ -171,19 +206,68 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
 
     // Update clips
     if (currClip === 0) {
-      for (let j = 0; j < rayMeshes.length; j++){
-        rayMeshes[j].position.set(rayTrajectories[j][currClipFrame][0], rayTrajectories[j][currClipFrame][1], rayTrajectories[j][currClipFrame][2]);
-        updateTrail(rayMeshes[j], trails[j]);
-      }
-      camera.position.set(cameraTrajectory[currClipFrame][0],cameraTrajectory[currClipFrame][1],cameraTrajectory[currClipFrame][2]); 
+      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
+      let newPhi = sphericalCoords.phi + Math.PI / 600.0;
+      let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
+      camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
       camera.lookAt(cameraCenter);
 
+      for (let j = 0; j < sceneOneRayMeshes.length; j++){
+        sceneOneRayMeshes[j].position.set(sceneOneRayTrajectories[j][currClipFrame][0], sceneOneRayTrajectories[j][currClipFrame][1], sceneOneRayTrajectories[j][currClipFrame][2]);
+        updateTrail(sceneOneRayMeshes[j], sceneOneTrails[j]);
+      }
+
+      currClipFrame = currClipFrame + 5;
+      if (currClipFrame >= sceneOneRayTrajectories[0].length) {
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      }
+    } else if (currClip === 1) {
+      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
+      let newPhi = sphericalCoords.phi + Math.PI / 600.0;
+      let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
+      camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
+      camera.lookAt(cameraCenter);
+
+      let currClipTime = performance.now() * 0.001; // convert  to seconds
+
+      const elapsedClipTime = currClipTime - clipStartTime;
+      const period = (2.0 * Math.PI) / pulseAngularVelocity;
+      const numCycles = elapsedClipTime / period;
+
+      console.log(photonSphereMesh);
+
+      if (numCycles < numPulses) {
+        let currOpacity = (Math.sin(pulseAngularVelocity * elapsedClipTime + pulsePhase) + 1.0) / 2.0;
+        photonSphereMesh.material.opacity = currOpacity;
+      } else {
+        photonSphereMesh.material.opacity = 1.0;
+      }
       currClipFrame = currClipFrame + 1;
       if (currClipFrame === numFramesPerClip[currClip]) {
         currClip = (currClip + 1) % numFramesPerClip.length;
         currClipFrame = 0;
       }
-    } else if (currClip === 1) {
+    } else if (currClip === 2) {
+
+      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
+      let currPhi = sphericalCoords.phi;
+
+      let phiLengthContractionVelocity = 0.001;
+      // let phiLength = Math.PI - phiLengthContractionVelocity * currClipFrame;
+      let phiLength = Math.PI / 2.0;
+
+      scene.remove(photonSphereMesh);
+      console.log(currPhotonSpherePhiLength);
+
+      photonSphereMesh = addPhotonSphereStartToEnd(scene, 30, 0, Math.PI / 2.0, currPhi);
+
+      // photonSphereMesh.rotation.x = Math.PI / 2.0;
+      photonSphereMesh.rotation.x = 0.1 * currClipFrame;
+      // photonSphereMesh.rotation.z = (currPhi - Math.PI / 2.0) - 0.1 * currClipFrame;
+
+      currClipFrame = currClipFrame + 1;
+    } else if (currClip === 3) {
       camera.position.set(camera.position.x, camera.position.y, camera.position.z - 0.25);
       camera.lookAt(cameraCenter);
 
@@ -193,7 +277,7 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
       } else {
         currClipFrame = currClipFrame + 1;
       }
-    } else if (currClip === 2) {
+    } else if (currClip === 3) {
       if (currClipFrame !== 0) {
         scene.remove(photonShellKeyframes[currClipFrame - 1]);
       }
@@ -214,7 +298,7 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
 
         currClipFrame = currClipFrame + 1;
       }
-    } else if (currClip === 3) { 
+    } else if (currClip === 4) { 
       let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z + 0.25);
 
       camera.position.set(camera.position.x, camera.position.y, camera.position.z + 0.25);
@@ -226,7 +310,7 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
       } else {
         currClipFrame = currClipFrame + 1;
       }
-    } else if (currClip === 4 || currClip === 5 || currClip === 6) {
+    } else if (currClip === 5 || currClip === 7 || currClip === 9) {
       let currClipTime = performance.now() * 0.001; // convert  to seconds
 
       let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
@@ -241,12 +325,60 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
       const period = (2.0 * Math.PI) / pulseAngularVelocity;
       const numCycles = elapsedClipTime / period;
 
+      console.log("currClipTime: " + currClipTime);
+      console.log("startClipTime: " + clipStartTime);
+      console.log("num cycles: " + numCycles);
+
+      const crossSectionIndex = (currClip === 5) ? 0 : (currClip === 7) ? 1 : 2;
+
       if (numCycles < numPulses) {
         let currOpacity = (Math.sin(pulseAngularVelocity * elapsedClipTime + pulsePhase) + 1.0) / 2.0;
-        setCrossSectionOpacity(photonShellCrossSectionsSpin50[currClip - 4], currOpacity)
+        setCrossSectionOpacity(photonShellCrossSectionsSpin50[crossSectionIndex], currOpacity)
       } else {
-        setCrossSectionOpacity(photonShellCrossSectionsSpin50[currClip - 4], 1.0)
+        setCrossSectionOpacity(photonShellCrossSectionsSpin50[crossSectionIndex], 0.5)
       }
+
+      currClipFrame = currClipFrame + 1;
+      if (currClipFrame === numFramesPerClip[currClip]) {
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      }
+    } else if (currClip === 6) {
+      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
+      let newPhi = sphericalCoords.phi + Math.PI / 600.0;
+
+      let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
+
+      camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
+      camera.lookAt(cameraCenter);
+
+      currClipFrame = currClipFrame + 1;
+      if (currClipFrame === numFramesPerClip[currClip]) {
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      }
+    } else if (currClip === 8) {
+      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
+      let newPhi = sphericalCoords.phi + Math.PI / 600.0;
+
+      let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
+
+      camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
+      camera.lookAt(cameraCenter);
+
+      currClipFrame = currClipFrame + 1;
+      if (currClipFrame === numFramesPerClip[currClip]) {
+        currClip = (currClip + 1) % numFramesPerClip.length;
+        currClipFrame = 0;
+      }
+    } else if (currClip === 10) {
+      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
+      let newPhi = sphericalCoords.phi + Math.PI / 600.0;
+
+      let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
+
+      camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
+      camera.lookAt(cameraCenter);
 
       currClipFrame = currClipFrame + 1;
       if (currClipFrame === numFramesPerClip[currClip]) {
@@ -260,6 +392,7 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
 	  renderer.render( scene, camera );
 
     currGlobalFrame = currGlobalFrame + 1;
+
 
     if (CAPTUREON == 1) { 
       console.log('capturing!')
@@ -521,6 +654,62 @@ function addBlackHole(scene, radius) {
   return blackholeMesh;
 }
 
+function addPhotonSphere(scene, radius) {
+  const photonSphereMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 64, 64), 
+    new THREE.MeshBasicMaterial({ 
+      color: 0xffffff,
+      transparent: true, 
+      opacity: 1.0
+    })
+  );
+
+  scene.add(photonSphereMesh);
+
+  return photonSphereMesh;
+}
+
+function addPhotonSphereAzimuthal(scene, radius, phiLength) {
+  const photonSphereMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 
+      64, 
+      64,
+      0.0,
+      phiLength,
+      0, 
+      Math.PI), 
+    new THREE.MeshBasicMaterial({ 
+      color: 0xffffff,
+      transparent: true, 
+      opacity: 1.0
+    })
+  );
+
+  scene.add(photonSphereMesh);
+
+  return photonSphereMesh;
+}
+
+function addPhotonSphereStartToEnd(scene, radius, phiStart, phiEnd, currPhi) {
+  const photonSphereMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 
+      64, 
+      64,
+      0.0,
+      phiEnd - phiStart,
+      0, 
+      Math.PI), 
+    new THREE.MeshBasicMaterial({ 
+      color: 0xffffff,
+      transparent: true, 
+      opacity: 1.0
+    })
+  );
+
+  scene.add(photonSphereMesh);
+  return photonSphereMesh;
+}
+
 function addRadialAxis(scene) {
   const radialAxisPoints = [];
 
@@ -602,7 +791,6 @@ function padTrajectory(rayTrajectory, trajectoryIndex, lengths) {
   let endPosition = rayTrajectory[rayTrajectory.length - 1];
   console.log(startPosition)
   console.log(endPosition)
-
 
   const paddingBefore = Array(numPadElementsBefore).fill(startPosition);
   const paddingAfter = Array(numPadElementsAfter).fill(endPosition);
