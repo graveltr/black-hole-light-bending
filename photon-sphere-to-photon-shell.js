@@ -28,7 +28,7 @@ console.log(sceneOneCsvUrls);
 const basepaths = [];
 basepaths.push("trajectories/photon-sphere-to-photon-shell/inner-photon-shell-cross-section-trajectories/");
 basepaths.push("trajectories/photon-sphere-to-photon-shell/middle-photon-shell-cross-section-trajectories/");
-// basepaths.push("trajectories/photon-sphere-to-photon-shell/outer-photon-shell-cross-section-trajectories/");
+basepaths.push("trajectories/photon-sphere-to-photon-shell/outer-photon-shell-cross-section-trajectories/");
 const numCrossSections = basepaths.length;
 
 let numAzimuths = 10;
@@ -110,7 +110,13 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
 
   const sceneOneRayTrajectories = rayTrajectories.slice(0, numSceneOneTrajectories);
   const innerPhotonShellCrossSectionTrajectories = rayTrajectories.slice(numSceneOneTrajectories, numSceneOneTrajectories + numAzimuths);
-  const middlePhotonShellCrossSectionTrajectories = rayTrajectories.slice(numSceneOneTrajectories + numAzimuths, rayTrajectories.length);
+  const middlePhotonShellCrossSectionTrajectories = rayTrajectories.slice(numSceneOneTrajectories + numAzimuths, numSceneOneTrajectories + 2 * numAzimuths);
+  const outerPhotonShellCrossSectionTrajectories = rayTrajectories.slice(numSceneOneTrajectories + 2 * numAzimuths, rayTrajectories.length);
+  
+  const photonShellCrossSectionTrajectories = [];
+  photonShellCrossSectionTrajectories.push(innerPhotonShellCrossSectionTrajectories);
+  photonShellCrossSectionTrajectories.push(middlePhotonShellCrossSectionTrajectories);
+  photonShellCrossSectionTrajectories.push(outerPhotonShellCrossSectionTrajectories);
 
   // Set up the THREE.js scene.
   const scene = new THREE.Scene();
@@ -158,23 +164,25 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
   // Clip 4: Bring camera back up into orbit
   numFramesPerClip[4] = -1;
 
-  // Clip 5: Pulse the first photon shell cross section
-  numFramesPerClip[5] = 200;
+  // Clip 5: First photon shell cross section trajectories
+  numFramesPerClip[5] = 400;
 
-  // Clip 6: First photon shell cross section trajectories
-  numFramesPerClip[6] = 400;
+  const crossSectionPulseTime = 200;
 
-  // Clip 7: Pulse the second photon shell cross section
-  numFramesPerClip[7] = 200;
+  // Clip 6: Pulse the first photon shell cross section
+  numFramesPerClip[6] = crossSectionPulseTime;
 
-  // Clip 8: Add second photon shell cross section trajectories
-  numFramesPerClip[8] = 300;
+  // Clip 7: Add second photon shell cross section trajectories
+  numFramesPerClip[7] = 400;
 
-  // Clip 9: Pulse the third photon shell cross section
-  numFramesPerClip[9] = 300;
+  // Clip 8: Pulse the second photon shell cross section
+  numFramesPerClip[8] = crossSectionPulseTime;
 
-  // Clip 10: Add third photon shell cross section trajectories
-  numFramesPerClip[10] = 100;
+  // Clip 9: Add third photon shell cross section trajectories
+  numFramesPerClip[9] = 400;
+
+  // Clip 10: Pulse the third photon shell cross section
+  numFramesPerClip[10] = crossSectionPulseTime + 1000;
 
   let sceneOneRayMeshes = [];
   let sceneOneTrails = [];
@@ -196,28 +204,26 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
   let clipFrameOfHalfSpin;
   let currPhotonShellKeyframe = 0;
 
-  let innerPhotonShellCrossSectionSphereMesh;
-  let middlePhotonShellCrossSectionSphereMesh;
-
+  let rcrits = [24.07, 27.62, 31.17];
   let thetaMinuses = [1.05, 0.20, 0.38];
   let thetaPluses = [2.09, 2.94, 2.76];
 
-  let rcrits = [24.07, 27.62, 31.17];
-
-  let innerPhotonShellCrossSectionLineMeshRight;
-  let innerPhotonShellCrossSectionLineMeshLeft;
-  let middlePhotonShellCrossSectionLineMeshRight;
-  let middlePhotonShellCrossSectionLineMeshLeft;
-
   let photonShellCrossSectionAngularOffset;
 
-  let innerPhotonShellCrossSectionRayMeshes = [];
-  let innerPhotonShellCrossSectionTrails = [];
-  let middlePhotonShellCrossSectionRayMeshes = [];
-  let middlePhotonShellCrossSectionTrails = [];
+  // Each array element is a 2 dimensional array containing left and right line meshes for a given cross section
+  let photonShellCrossSectionLineMeshes = [];
 
-  let innerPhotonShellCrossSectionTrajectoryIdx = 0;
-  let middlePhotonShellCrossSectionTrajectoryIdx = 0;
+  // Each array element is a spherical mesh for a given cross section
+  let photonShellCrossSectionSphericalMeshes = [];
+
+  // Each array element is an array containing the trajectory meshes for a given cross section
+  let photonShellCrossSectionRayMeshes = [];
+
+  // Each array element is an array containing the trail meshes for a given cross section
+  let photonShellCrossSectionTrails = [];
+
+  // The counters that keep track of current trajectory iteration for each cross section
+  let photonShellCrossSectionTrajectoryIdxs = [0, 0, 0];
 
   function animate() {
     animationId = requestAnimationFrame( animate );
@@ -263,91 +269,48 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
         scene.add(photonShellKeyframes[0]);
         currPhotonShellKeyframe += 1;
       } else if (currClip === 4) {
-      } else if (currClip === 5) { 
+      } else if (currClip === 6 || currClip === 8 || currClip === 10) { 
         clipStartTime = performance.now() * 0.001;
 
-        innerPhotonShellCrossSectionLineMeshRight = createPhotonSphereLineMesh(rcrits[0], thetaMinuses[0], thetaPluses[0], photonShellCrossSectionAngularOffset);
-        innerPhotonShellCrossSectionLineMeshLeft = createPhotonSphereLineMesh(rcrits[0], thetaMinuses[0], thetaPluses[0], photonShellCrossSectionAngularOffset + Math.PI);
+        let crossSectionIdx = (currClip === 6) ? 0 : (currClip === 8) ? 1 : 2;
 
-        innerPhotonShellCrossSectionLineMeshLeft.material.color.r = 1.0;
-        innerPhotonShellCrossSectionLineMeshLeft.material.color.g = 0.0;
-        innerPhotonShellCrossSectionLineMeshLeft.material.color.b = 0.0;
-
-        innerPhotonShellCrossSectionLineMeshRight.material.color.r = 1.0;
-        innerPhotonShellCrossSectionLineMeshRight.material.color.g = 0.0;
-        innerPhotonShellCrossSectionLineMeshRight.material.color.b = 0.0;
-
-        scene.add(innerPhotonShellCrossSectionLineMeshRight);
-        scene.add(innerPhotonShellCrossSectionLineMeshLeft);
-
-        innerPhotonShellCrossSectionSphereMesh = createSphereMesh(rcrits[0], thetaMinuses[0], thetaPluses[0], 0.0, 2.0 * Math.PI);
-        innerPhotonShellCrossSectionSphereMesh.material.opacity = 1.0;
-        innerPhotonShellCrossSectionSphereMesh.material.color.r = 1.0;
-        innerPhotonShellCrossSectionSphereMesh.material.color.g = 0.0;
-        innerPhotonShellCrossSectionSphereMesh.material.color.b = 0.0;
-
-        scene.add(innerPhotonShellCrossSectionSphereMesh);
-      } else if (currClip === 6) {
-        clipStartTime = performance.now() * 0.001;
-        innerPhotonShellCrossSectionRayMeshes = addRays(scene, innerPhotonShellCrossSectionTrajectories.length);
-        innerPhotonShellCrossSectionTrails = addTrails(scene,  innerPhotonShellCrossSectionTrajectories.length, innerPhotonShellCrossSectionTrajectories.map(matrix => matrix[0]));
-
-        innerPhotonShellCrossSectionRayMeshes.forEach(mesh => {
-          mesh.material.color.r = 1.0;
-          mesh.material.color.g = 0.0;
-          mesh.material.color.b = 0.0;
+        let lineMeshArr = [];
+        lineMeshArr.push(createPhotonSphereLineMesh(rcrits[crossSectionIdx], thetaMinuses[crossSectionIdx], thetaPluses[crossSectionIdx], photonShellCrossSectionAngularOffset));
+        lineMeshArr.push(createPhotonSphereLineMesh(rcrits[crossSectionIdx], thetaMinuses[crossSectionIdx], thetaPluses[crossSectionIdx], photonShellCrossSectionAngularOffset + Math.PI));
+        lineMeshArr.forEach(lineMesh => {
+          lineMesh.material.color.r = (currClip === 6) ? 1.0 : (currClip === 8) ? 0.0 : 0.0;
+          lineMesh.material.color.g = (currClip === 6) ? 0.0 : (currClip === 8) ? 1.0 : 0.0;
+          lineMesh.material.color.b = (currClip === 6) ? 0.0 : (currClip === 8) ? 0.0 : 1.0;
+          scene.add(lineMesh);
         })
+        photonShellCrossSectionLineMeshes.push(lineMeshArr);
 
-        innerPhotonShellCrossSectionTrails.forEach(trail => {
-          trail.material.color.r = 1.0;
-          trail.material.color.g = 0.0;
-          trail.material.color.b = 0.0;
+        let currSphericalMesh = createSphereMesh(rcrits[crossSectionIdx], thetaMinuses[crossSectionIdx], thetaPluses[crossSectionIdx], 0.0, 2.0 * Math.PI);
+        currSphericalMesh.material.color.r = (currClip === 6) ? 1.0 : (currClip === 8) ? 0.0 : 0.0;
+        currSphericalMesh.material.color.g = (currClip === 6) ? 0.0 : (currClip === 8) ? 1.0 : 0.0;
+        currSphericalMesh.material.color.b = (currClip === 6) ? 0.0 : (currClip === 8) ? 0.0 : 1.0;
+        scene.add(currSphericalMesh);
+        photonShellCrossSectionSphericalMeshes.push(currSphericalMesh);
+      } else if (currClip === 5 || currClip === 7 || currClip === 9) {
+        clipStartTime = performance.now() * 0.001;
+
+        let crossSectionIdx = (currClip === 5) ? 0 : (currClip === 7) ? 1 : 2;
+
+        let currRayMeshes = addRays(scene, innerPhotonShellCrossSectionTrajectories.length);
+        currRayMeshes.forEach(mesh => {
+          mesh.material.color.r = (currClip === 5) ? 1.0 : (currClip === 7) ? 0.0 : 0.0;
+          mesh.material.color.g = (currClip === 5) ? 0.0 : (currClip === 7) ? 1.0 : 0.0;
+          mesh.material.color.b = (currClip === 5) ? 0.0 : (currClip === 7) ? 0.0 : 1.0;
         })
-      } else if (currClip === 7) {
-        clipStartTime = performance.now() * 0.001;
+        photonShellCrossSectionRayMeshes.push(currRayMeshes);
 
-        middlePhotonShellCrossSectionLineMeshRight = createPhotonSphereLineMesh(rcrits[1], thetaMinuses[1], thetaPluses[1], photonShellCrossSectionAngularOffset);
-        middlePhotonShellCrossSectionLineMeshLeft = createPhotonSphereLineMesh(rcrits[1], thetaMinuses[1], thetaPluses[1], photonShellCrossSectionAngularOffset + Math.PI);
-
-        middlePhotonShellCrossSectionLineMeshLeft.material.color.r = 0.0;
-        middlePhotonShellCrossSectionLineMeshLeft.material.color.g = 1.0;
-        middlePhotonShellCrossSectionLineMeshLeft.material.color.b = 0.0;
-
-        middlePhotonShellCrossSectionLineMeshRight.material.color.r = 0.0;
-        middlePhotonShellCrossSectionLineMeshRight.material.color.g = 1.0;
-        middlePhotonShellCrossSectionLineMeshRight.material.color.b = 0.0;
-
-        scene.add(middlePhotonShellCrossSectionLineMeshRight);
-        scene.add(middlePhotonShellCrossSectionLineMeshLeft);
-
-        middlePhotonShellCrossSectionSphereMesh = createSphereMesh(rcrits[1], thetaMinuses[1], thetaPluses[1], 0.0, 2.0 * Math.PI);
-        middlePhotonShellCrossSectionSphereMesh.material.opacity = 1.0;
-        middlePhotonShellCrossSectionSphereMesh.material.color.r = 0.0;
-        middlePhotonShellCrossSectionSphereMesh.material.color.g = 1.0;
-        middlePhotonShellCrossSectionSphereMesh.material.color.b = 0.0;
-
-        scene.add(middlePhotonShellCrossSectionSphereMesh);
-      } else if (currClip === 8) {
-        clipStartTime = performance.now() * 0.001;
-
-        middlePhotonShellCrossSectionRayMeshes = addRays(scene, middlePhotonShellCrossSectionTrajectories.length);
-        middlePhotonShellCrossSectionTrails = addTrails(scene,  middlePhotonShellCrossSectionTrajectories.length, middlePhotonShellCrossSectionTrajectories.map(matrix => matrix[0]));
-
-        middlePhotonShellCrossSectionRayMeshes.forEach(mesh => {
-          mesh.material.color.r = 0.0;
-          mesh.material.color.g = 1.0;
-          mesh.material.color.b = 0.0;
+        let currTrails = addTrails(scene, photonShellCrossSectionTrajectories[crossSectionIdx].length, photonShellCrossSectionTrajectories[crossSectionIdx].map(matrix => matrix[0]));
+        currTrails.forEach(trail => {
+          trail.material.color.r = (currClip === 5) ? 1.0 : (currClip === 7) ? 0.0 : 0.0;
+          trail.material.color.g = (currClip === 5) ? 0.0 : (currClip === 7) ? 1.0 : 0.0;
+          trail.material.color.b = (currClip === 5) ? 0.0 : (currClip === 7) ? 0.0 : 1.0;
         })
-
-        middlePhotonShellCrossSectionTrails.forEach(trail => {
-          trail.material.color.r = 0.0;
-          trail.material.color.g = 1.0;
-          trail.material.color.b = 0.0;
-        })
-      } else if (currClip === 9) {
-        clipStartTime = performance.now() * 0.001;
-      } else if (currClip === 10) {
-        clipStartTime = performance.now() * 0.001;
+        photonShellCrossSectionTrails.push(currTrails);
       } else if (currClip === 11) {
         clipStartTime = performance.now() * 0.001;
       } else {
@@ -444,92 +407,77 @@ function process(cameraTrajectory, rayTrajectories, photonShellKeyframes, spinVa
       } else {
         currClipFrame = currClipFrame + 1;
       }
-    } else if (currClip === 5) {
+    } else if (currClip === 6 || currClip === 8 || currClip === 10) {
+      let crossSectionIdx = (currClip === 6) ? 0 : (currClip === 8) ? 1 : 2;
+
       let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
       let newPhi = sphericalCoords.phi + Math.PI / 600.0;
       let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
       camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
       camera.lookAt(cameraCenter);
 
-      console.log(innerPhotonShellCrossSectionSphereMesh)
-      innerPhotonShellCrossSectionSphereMesh.material.opacity = getCurrentOpacity(performance.now() * 0.001, clipStartTime, numPulses, pulseAngularVelocity, pulsePhase, 0.0)
-      innerPhotonShellCrossSectionLineMeshLeft.material.opacity = getCurrentOpacity(performance.now() * 0.001, clipStartTime, numPulses, pulseAngularVelocity, pulsePhase, 0.5)
-      innerPhotonShellCrossSectionLineMeshRight.material.opacity = getCurrentOpacity(performance.now() * 0.001, clipStartTime, numPulses, pulseAngularVelocity, pulsePhase, 0.5)
+      photonShellCrossSectionSphericalMeshes[crossSectionIdx].material.opacity = getCurrentOpacity(performance.now() * 0.001, clipStartTime, numPulses, pulseAngularVelocity, pulsePhase, 0.0);
+      photonShellCrossSectionLineMeshes[crossSectionIdx].forEach(lineMesh => {
+        lineMesh.material.opacity = getCurrentOpacity(performance.now() * 0.001, clipStartTime, numPulses, pulseAngularVelocity, pulsePhase, 0.5)
+      })
+
+      for (let i = 0; i <= crossSectionIdx; i++) {
+        let posIdx            = photonShellCrossSectionTrajectoryIdxs[i];
+        let currRayMeshes     = photonShellCrossSectionRayMeshes[i];
+        let currTrails        = photonShellCrossSectionTrails[i];
+        let currTrajectories  = photonShellCrossSectionTrajectories[i];
+        for (let j = 0; j < currRayMeshes.length; j++) {
+          let currMesh        = currRayMeshes[j];
+          let currTrail       = currTrails[j];
+          let currTrajectory  = currTrajectories[j];
+
+          currMesh.position.set(currTrajectory[posIdx][0], currTrajectory[posIdx][1], currTrajectory[posIdx][2]);
+          updateTrail(currMesh, currTrail);
+        }
+        photonShellCrossSectionTrajectoryIdxs[i] += 1;
+      }
 
       currClipFrame = currClipFrame + 1;
       if (currClipFrame === numFramesPerClip[currClip]) {
         currClip = (currClip + 1) % numFramesPerClip.length;
         currClipFrame = 0;
       }
-    } else if (currClip === 6) {
+    } else if (currClip === 5 || currClip === 7 || currClip == 9) {
+      let crossSectionIdx = (currClip === 5) ? 0 : (currClip === 7) ? 1 : 2;
+
       let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
       let newPhi = sphericalCoords.phi + Math.PI / 600.0;
       let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
       camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
       camera.lookAt(cameraCenter);
 
-      for (let j = 0; j < innerPhotonShellCrossSectionRayMeshes.length; j++){
-        innerPhotonShellCrossSectionRayMeshes[j].position.set(innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][0], innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][1], innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][2]);
-        updateTrail(innerPhotonShellCrossSectionRayMeshes[j], innerPhotonShellCrossSectionTrails[j]);
+      for (let i = 0; i <= crossSectionIdx; i++) {
+        let posIdx            = photonShellCrossSectionTrajectoryIdxs[i];
+        let currRayMeshes     = photonShellCrossSectionRayMeshes[i];
+        let currTrails        = photonShellCrossSectionTrails[i];
+        let currTrajectories  = photonShellCrossSectionTrajectories[i];
+        for (let j = 0; j < currRayMeshes.length; j++) {
+          let currMesh        = currRayMeshes[j];
+          let currTrail       = currTrails[j];
+          let currTrajectory  = currTrajectories[j];
+
+          currMesh.position.set(currTrajectory[posIdx][0], currTrajectory[posIdx][1], currTrajectory[posIdx][2]);
+          updateTrail(currMesh, currTrail);
+        }
+        photonShellCrossSectionTrajectoryIdxs[i] += 1;
       }
-      innerPhotonShellCrossSectionTrajectoryIdx += 1;
 
       currClipFrame += 1;
       if (currClipFrame > numFramesPerClip[currClip]) {
         currClip = (currClip + 1) % numFramesPerClip.length;
         currClipFrame = 0;
       }
-    } else if (currClip === 7) {
-      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
-      let newPhi = sphericalCoords.phi + Math.PI / 600.0;
-      let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
-      camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
-      camera.lookAt(cameraCenter);
-
-      for (let j = 0; j < innerPhotonShellCrossSectionRayMeshes.length; j++){
-        innerPhotonShellCrossSectionRayMeshes[j].position.set(innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][0], innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][1], innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][2]);
-        updateTrail(innerPhotonShellCrossSectionRayMeshes[j], innerPhotonShellCrossSectionTrails[j]);
-      }
-      innerPhotonShellCrossSectionTrajectoryIdx += 1;
-
-      middlePhotonShellCrossSectionSphereMesh.material.opacity = getCurrentOpacity(performance.now() * 0.001, clipStartTime, numPulses, pulseAngularVelocity, pulsePhase, 0.0)
-      middlePhotonShellCrossSectionLineMeshLeft.material.opacity = getCurrentOpacity(performance.now() * 0.001, clipStartTime, numPulses, pulseAngularVelocity, pulsePhase, 0.5)
-      middlePhotonShellCrossSectionLineMeshRight.material.opacity = getCurrentOpacity(performance.now() * 0.001, clipStartTime, numPulses, pulseAngularVelocity, pulsePhase, 0.5)
-
-      currClipFrame += 1;
-      if (currClipFrame > numFramesPerClip[currClip]) {
-        currClip = (currClip + 1) % numFramesPerClip.length;
-        currClipFrame = 0;
-      }
-    } else if (currClip === 8) {
-      let sphericalCoords = cartesianToSpherical(camera.position.x, camera.position.y, camera.position.z);
-      let newPhi = sphericalCoords.phi + Math.PI / 600.0;
-      let newCartesianCoords = sphericalToCartesian(sphericalCoords.r, sphericalCoords.theta, newPhi);
-      camera.position.set(newCartesianCoords.x, newCartesianCoords.y, newCartesianCoords.z);
-      camera.lookAt(cameraCenter);
-
-      for (let j = 0; j < innerPhotonShellCrossSectionRayMeshes.length; j++){
-        innerPhotonShellCrossSectionRayMeshes[j].position.set(innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][0], innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][1], innerPhotonShellCrossSectionTrajectories[j][innerPhotonShellCrossSectionTrajectoryIdx][2]);
-        updateTrail(innerPhotonShellCrossSectionRayMeshes[j], innerPhotonShellCrossSectionTrails[j]);
-      }
-      innerPhotonShellCrossSectionTrajectoryIdx += 1;
-
-      for (let j = 0; j < middlePhotonShellCrossSectionRayMeshes.length; j++){
-        middlePhotonShellCrossSectionRayMeshes[j].position.set(middlePhotonShellCrossSectionTrajectories[j][middlePhotonShellCrossSectionTrajectoryIdx][0], middlePhotonShellCrossSectionTrajectories[j][middlePhotonShellCrossSectionTrajectoryIdx][1], middlePhotonShellCrossSectionTrajectories[j][middlePhotonShellCrossSectionTrajectoryIdx][2]);
-        updateTrail(middlePhotonShellCrossSectionRayMeshes[j], middlePhotonShellCrossSectionTrails[j]);
-      }
-      middlePhotonShellCrossSectionTrajectoryIdx += 1;
-
-      currClipFrame += 1;
-    } else if (currClip === 9) {
     } else {
       console.log("Clip counter is out of bounds");
     }
 
 	  renderer.render( scene, camera );
-
     currGlobalFrame = currGlobalFrame + 1;
-
     if (CAPTUREON == 1) { 
       console.log('capturing!')
       capturer.capture( renderer.domElement ); 
@@ -1097,7 +1045,8 @@ function createSphereMesh(radius, startTheta, endTheta, startPhi, endPhi) {
   const material =  new THREE.MeshBasicMaterial({ 
       color: 0xffffff,
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      wireframe: true
   })
 
   const sphereMesh = new THREE.Mesh(geometry, material);
